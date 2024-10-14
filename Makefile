@@ -1,12 +1,14 @@
-# Makefile
-
-.PHONY: setup-dev install-dev install-prod compile-dev compile-prod test run docker-build docker-run docker-stop docker-remove docker-restart docker-clean
+.PHONY: setup-dev install-dev install-prod compile-dev compile-prod test run docker-build docker-run docker-stop docker-remove docker-restart docker-clean init
 
 # Default target to setup everything for development
 run-dev: compile-dev install-dev test
 
+# Ensure pip-tools is installed
+init:
+	pip install pip-tools
+
 # Compile production dependencies
-compile-prod:
+compile-prod: init
 	pip-compile requirements.in
 
 # Compile development dependencies
@@ -14,7 +16,7 @@ compile-dev: compile-prod
 	pip-compile requirements-dev.in -o requirements-dev.txt
 
 # Install production dependencies
-install-prod:
+install-prod: init
 	pip-sync requirements.txt
 
 # Install development dependencies

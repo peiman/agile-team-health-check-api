@@ -19,10 +19,17 @@ jobs:
       with:
         python-version: '3.9'
 
+    # Install pip-tools to ensure everything is set up
+    - name: Initialize and install pip-tools
+      run: |
+        make init
+
+    # Install all development dependencies
     - name: Install dependencies
       run: |
         make install-dev
 
+    # Run tests
     - name: Run tests
       run: |
         make test
