@@ -1,0 +1,6 @@
+# requirements-dev.in
+
+-r requirements.in
+pytest
+httpx
+pip-tools

@@ -1,0 +1,6 @@
+# requirements.in
+
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
