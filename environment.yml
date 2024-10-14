@@ -1,0 +1,17 @@
+name: agile-health-check
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - fastapi
+  - uvicorn
+  - pytest
+  - httpx
+  - pyyaml
+  - pip
+  - pip:
+    - uvicorn[standard]
+    - pytest
+    - httpx
+    - python-dotenv
