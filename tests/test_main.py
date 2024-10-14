@@ -1,3 +1,11 @@
 # tests/test_main.py
 
-# You can include additional tests as needed, or use test_api.py for endpoint testing
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_root_endpoint():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Hello agile team"}

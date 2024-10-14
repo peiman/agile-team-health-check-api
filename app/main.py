@@ -4,8 +4,14 @@ import logging
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from typing import List
-from .models import ResponseBase, AssessmentResultBase, QuestionBase, AnswerBase
-from .survey_registry import survey_registry
+from .models import (
+    ResponseBase,
+    AssessmentResultBase,
+    QuestionBase,
+    SurveyModel,
+    SurveySummary
+)
+from .survey_registry import SurveyRegistry
 from .repositories.assessment_repository import AssessmentRepository
 from .exceptions import InvalidAnswerException
 
@@ -16,7 +22,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+# Create the FastAPI app with metadata
+app = FastAPI(
+    title="Agile Team Health Check API",
+    description="An API for measuring and visualizing the health of Agile teams using survey instruments.",
+    version="0.1.0",
+    contact={
+        "name": "Peiman Khorramshahi",
+        "url": "https://peiman.se",
+        "email": "peiman@khorramshahi.com",
+    },
+)
+
 assessment_repository = AssessmentRepository()
 
 @app.exception_handler(InvalidAnswerException)
@@ -27,19 +44,80 @@ async def invalid_answer_exception_handler(request: Request, exc: InvalidAnswerE
         content={"detail": exc.message},
     )
 
-@app.get("/surveys/{survey_id}/questions", response_model=List[QuestionBase])
+@app.get("/", summary="Root Greeting", tags=["General"])
+async def root():
+    """
+    Returns a simple greeting message.
+
+    - **Returns**: A greeting message as a dictionary.
+    """
+    return {"message": "Hello agile team"}
+
+@app.get("/surveys/", response_model=List[SurveySummary], summary="Get List of Surveys", tags=["Surveys"])
+async def list_surveys():
+    """
+    Retrieve a list of all available surveys.
+
+    - **Returns**: A list of surveys with their IDs, names, and types.
+    """
+    logger.info("Fetching list of all surveys")
+    survey_summaries = [
+        SurveySummary(
+            id=survey.id,
+            name=survey.name,
+            survey_type=survey.survey_type
+        ) for survey in SurveyRegistry.list_surveys()
+    ]
+    return survey_summaries
+
+@app.get("/surveys/{survey_id}", response_model=SurveyModel, summary="Get Survey Details", tags=["Surveys"])
+async def get_survey_details(survey_id: int):
+    """
+    Retrieve the details of a given survey, including its questions.
+
+    - **survey_id**: The ID of the survey.
+    - **Returns**: The survey details.
+    """
+    logger.info(f"Fetching details for survey_id: {survey_id}")
+    survey = SurveyRegistry.get_survey(survey_id)
+    if not survey:
+        logger.error(f"Survey with ID {survey_id} not found.")
+        raise HTTPException(status_code=404, detail="Survey not found")
+    # Convert SurveyBase instance to SurveyModel
+    survey_model = SurveyModel(
+        id=survey.id,
+        name=survey.name,
+        survey_type=survey.survey_type,
+        questions=survey.questions
+    )
+    return survey_model
+
+@app.get("/surveys/{survey_id}/questions", response_model=List[QuestionBase], summary="Get Survey Questions", tags=["Surveys"])
 async def get_survey_questions(survey_id: int):
+    """
+    Retrieve the list of questions for a given survey.
+
+    - **survey_id**: The ID of the survey.
+    - **Returns**: A list of questions with their details.
+    """
     logger.info(f"Fetching questions for survey_id: {survey_id}")
-    survey = survey_registry.get(survey_id)
+    survey = SurveyRegistry.get_survey(survey_id)
     if not survey:
         logger.error(f"Survey with ID {survey_id} not found.")
         raise HTTPException(status_code=404, detail="Survey not found")
     return survey.questions
 
-@app.post("/surveys/{survey_id}/responses", response_model=AssessmentResultBase)
+@app.post("/surveys/{survey_id}/responses", response_model=AssessmentResultBase, summary="Submit Survey Response", tags=["Surveys"])
 async def submit_survey_response(survey_id: int, response: ResponseBase, request: Request):
+    """
+    Submit responses for a survey and receive the calculated assessment result.
+
+    - **survey_id**: The ID of the survey.
+    - **response**: The survey responses submitted by the user.
+    - **Returns**: The assessment result including calculated scores.
+    """
     logger.info(f"Submitting response for survey_id: {survey_id} from {request.client.host}")
-    survey = survey_registry.get(survey_id)
+    survey = SurveyRegistry.get_survey(survey_id)
     if not survey:
         logger.error(f"Survey with ID {survey_id} not found.")
         raise HTTPException(status_code=404, detail="Survey not found")
