@@ -1,5 +1,8 @@
 # Agile Team Health Check API
 
+![Build Status](https://github.com/peiman/agile-team-health-check-api/actions/workflows/ci.yml/badge.svg)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 An API for measuring and visualizing the health of Agile teams using survey instruments.
 
 ## Table of Contents
