@@ -1,0 +1,67 @@
+# Python
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Virtual Environments
+env/
+venv/
+ENV/
+venv.bak/
+.venv/
+
+# FastAPI specific
+instance/
+*.db
+*.sqlite3
+
+# Docker
+*.env
+Dockerfile*
+docker-compose.yml
+docker-compose*.yml
+.dockerignore
+
+# Ignore local development files
+.vscode/
+.idea/
+*.swp
+
+# Ignore distribution/build directories
+dist/
+build/
+*.wheel
+
+# Ignore Python bytecode and logs
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Ignore coverage reports
+.coverage
+*.cover
+.hypothesis/
+
+# Ignore test cache directories
+.tox/
+.nox/
+
+# Ignore pytest
+.pytest_cache/
+
+# Ignore mypy type checking results
+.mypy_cache/
+.dmypy.json
+.dmypy.json.5
+
+# Ignore bandit security linter files
+.bandit
+
+# Ignore generated API docs
+/docs/_build/
