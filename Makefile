@@ -1,9 +1,8 @@
-.PHONY: setup-dev install-dev install-prod compile-dev compile-prod test run docker-build docker-run docker-stop docker-remove docker-restart docker-clean init
+# Makefile
 
-# Default target to setup everything for development
-run-dev: compile-dev install-dev test
+.PHONY: run-dev install-dev install-prod compile-dev compile-prod test run docker-build docker-run docker-stop docker-remove docker-restart docker-clean init pre-commit lint format
 
-# Ensure pip-tools is installed
+# Initialize the environment by installing pip-tools
 init:
 	pip install pip-tools
 
@@ -16,16 +15,31 @@ compile-dev: compile-prod
 	pip-compile requirements-dev.in -o requirements-dev.txt
 
 # Install production dependencies
-install-prod: init
+install-prod: compile-prod
 	pip-sync requirements.txt
 
 # Install development dependencies
-install-dev: install-prod
+install-dev: install-prod compile-dev
 	pip-sync requirements-dev.txt
+
+# Install pre-commit hooks
+pre-commit: install-dev
+	pre-commit install
+
+# Format code using Black
+format:
+	black app/ tests/ Makefile
+
+# Lint code using Flake8
+lint:
+	flake8 app/ tests/ Makefile
 
 # Run tests
 test:
 	python -m pytest
+
+# Default target to setup everything for development and run tests
+run-dev: install-dev pre-commit lint test
 
 # Run the application locally
 run:

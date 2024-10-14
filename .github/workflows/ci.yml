@@ -1,3 +1,5 @@
+# .github/workflows/ci.yml
+
 name: CI
 
 on:
@@ -19,15 +21,20 @@ jobs:
       with:
         python-version: '3.9'
 
-    # Install pip-tools to ensure everything is set up
-    - name: Initialize and install pip-tools
-      run: |
-        make init
-
-    # Install all development dependencies
-    - name: Install dependencies
+    # Initialize and install dependencies
+    - name: Initialize and install dependencies
       run: |
         make install-dev
+
+    # Install pre-commit hooks
+    - name: Install pre-commit hooks
+      run: |
+        make pre-commit
+
+    # Run pre-commit hooks (formatting and linting)
+    - name: Run pre-commit hooks
+      run: |
+        pre-commit run --all-files
 
     # Run tests
     - name: Run tests

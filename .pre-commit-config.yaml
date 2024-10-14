@@ -1,0 +1,23 @@
+# .pre-commit-config.yaml
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.1.0  # Use the latest stable release
+    hooks:
+      - id: black
+        args: ["--check"]
+        language_version: python3.9
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0  # Use the latest stable release
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-bugbear]
+        args: ["--max-line-length=88"]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
