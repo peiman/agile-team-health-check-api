@@ -1,10 +1,12 @@
 # app/models.py
 
-from typing import List, Dict
+from typing import List, Dict, TYPE_CHECKING
 from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import Enum
-from .scoring import ScoringMechanism
+
+if TYPE_CHECKING:
+    from .scoring import ScoringMechanism
 
 
 class SurveyType(str, Enum):
@@ -44,7 +46,7 @@ class SurveyBase:
         name: str,
         survey_type: SurveyType,
         questions: List[QuestionBase],
-        scoring_mechanism: ScoringMechanism,
+        scoring_mechanism: "ScoringMechanism",
     ):
         self.id = id
         self.name = name
