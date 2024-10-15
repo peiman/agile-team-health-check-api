@@ -1,23 +1,21 @@
-# .pre-commit-config.yaml
-
 repos:
   - repo: https://github.com/psf/black
-    rev: 23.1.0  # Use the latest stable release
+    rev: 24.10.0  # Use the latest stable release
     hooks:
       - id: black
-        args: ["--check"]
+        args: ["--line-length", "88"]  # Automatically formats code to 88 characters per line
         language_version: python3.9
 
   - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0  # Use the latest stable release
+    rev: 7.1.1  # Use the latest stable release
     hooks:
       - id: flake8
         additional_dependencies: [flake8-bugbear]
-        args: ["--max-line-length=88"]
+        args: ["--max-line-length=88"]  # Ensures Flake8 follows the 88 character limit
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
+      - id: trailing-whitespace  # Removes trailing whitespace
+      - id: end-of-file-fixer  # Ensures files end with a newline
+      - id: check-yaml  # Checks YAML file formatting
