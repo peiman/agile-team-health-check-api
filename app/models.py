@@ -4,6 +4,7 @@ from typing import List, Dict
 from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import Enum
+from .scoring import ScoringMechanism
 
 
 class SurveyType(str, Enum):
@@ -38,12 +39,18 @@ class SurveyBase:
     """
 
     def __init__(
-        self, id: int, name: str, survey_type: SurveyType, questions: List[QuestionBase]
+        self,
+        id: int,
+        name: str,
+        survey_type: SurveyType,
+        questions: List[QuestionBase],
+        scoring_mechanism: ScoringMechanism,
     ):
         self.id = id
         self.name = name
         self.survey_type = survey_type
         self.questions = questions
+        self.scoring_mechanism = scoring_mechanism
 
 
 class SurveyModel(BaseModel):

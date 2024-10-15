@@ -12,7 +12,7 @@ class SHSScoringMechanism(ScoringMechanism):
     def calculate_score(
         self, answers: List[AnswerBase], questions: List[QuestionBase]
     ) -> Dict[str, float]:
-        total_score = 0
+        total_score = 0.0
         for answer in answers:
             question = next((q for q in questions if q.id == answer.question_id), None)
             if not question:
@@ -34,7 +34,8 @@ class SHSScoringMechanism(ScoringMechanism):
 
 
 class SHSSurvey(SurveyBase):
-    def __init__(self):
+    def __init__(self) -> None:
+        scoring_mechanism = SHSScoringMechanism()
         super().__init__(
             id=1,
             name="Subjective Happiness Scale",
@@ -45,18 +46,21 @@ class SHSSurvey(SurveyBase):
                     text="In general, I consider myself:",
                     scale_min=1,
                     scale_max=7,
+                    reverse_scored=False,
                 ),
                 QuestionBase(
                     id=2,
                     text="Compared to most of my peers, I consider myself:",
                     scale_min=1,
                     scale_max=7,
+                    reverse_scored=False,
                 ),
                 QuestionBase(
                     id=3,
                     text="Some people are generally very happy...",
                     scale_min=1,
                     scale_max=7,
+                    reverse_scored=False,
                 ),
                 QuestionBase(
                     id=4,
@@ -66,5 +70,6 @@ class SHSSurvey(SurveyBase):
                     reverse_scored=True,
                 ),
             ],
+            scoring_mechanism=scoring_mechanism,
         )
         self.scoring_mechanism = SHSScoringMechanism()

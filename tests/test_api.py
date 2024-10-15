@@ -2,25 +2,25 @@
 
 from fastapi.testclient import TestClient
 from app.main import app
-from app.survey_registry import SurveyRegistry
+from app.survey_registry import survey_registry
 
 client = TestClient(app)
 
 
-def test_root_endpoint():
+def test_root_endpoint() -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"message": "Hello agile team"}
 
 
-def test_list_surveys():
+def test_list_surveys() -> None:
     response = client.get("/surveys/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
 
     # Get expected surveys from the SurveyRegistry
-    expected_surveys = SurveyRegistry.list_surveys()
+    expected_surveys = survey_registry.list_surveys()
     assert len(data) == len(expected_surveys)
 
     # Map response data by survey ID for easy lookup
@@ -34,36 +34,39 @@ def test_list_surveys():
         assert response_survey["survey_type"] == expected_survey.survey_type.value
 
 
-def test_get_survey_details():
+def test_get_survey_details() -> None:
     # Get a survey ID from the SurveyRegistry
-    survey_ids = [survey.id for survey in SurveyRegistry.list_surveys()]
+    survey_ids = [survey.id for survey in survey_registry.list_surveys()]
     survey_id = survey_ids[0]  # Test with the first survey
 
     response = client.get(f"/surveys/{survey_id}")
     assert response.status_code == 200
     data = response.json()
-    expected_survey = SurveyRegistry.get_survey(survey_id)
+    expected_survey = survey_registry.get_survey(survey_id)
+    assert expected_survey is not None
     assert data["id"] == expected_survey.id
     assert data["name"] == expected_survey.name
     assert data["survey_type"] == expected_survey.survey_type.value
     assert len(data["questions"]) == len(expected_survey.questions)
 
 
-def test_get_survey_questions():
+def test_get_survey_questions() -> None:
     # Get a survey ID from the SurveyRegistry
-    survey_ids = [survey.id for survey in SurveyRegistry.list_surveys()]
+    survey_ids = [survey.id for survey in survey_registry.list_surveys()]
     survey_id = survey_ids[0]  # Test with the first survey
 
     response = client.get(f"/surveys/{survey_id}/questions")
     assert response.status_code == 200
     data = response.json()
-    expected_survey = SurveyRegistry.get_survey(survey_id)
+    expected_survey = survey_registry.get_survey(survey_id)
+    assert expected_survey is not None
     assert len(data) == len(expected_survey.questions)
 
 
-def test_submit_survey_response_valid():
+def test_submit_survey_response_valid() -> None:
     # Get a survey from the SurveyRegistry
-    expected_survey = SurveyRegistry.get_survey(1)
+    expected_survey = survey_registry.get_survey(1)
+    assert expected_survey is not None
     survey_id = expected_survey.id
     # Prepare answers with valid scores within the scale
     answers = []
@@ -83,9 +86,10 @@ def test_submit_survey_response_valid():
     assert "scores" in data
 
 
-def test_submit_survey_response_missing_answer():
+def test_submit_survey_response_missing_answer() -> None:
     # Get a survey from the SurveyRegistry
-    expected_survey = SurveyRegistry.get_survey(1)
+    expected_survey = survey_registry.get_survey(1)
+    assert expected_survey is not None
     survey_id = expected_survey.id
     # Prepare answers but omit one question
     answers = []
@@ -104,9 +108,10 @@ def test_submit_survey_response_missing_answer():
     assert "Incomplete set of answers" in response.json()["detail"]
 
 
-def test_submit_survey_response_invalid_score():
+def test_submit_survey_response_invalid_score() -> None:
     # Get a survey from the SurveyRegistry
-    expected_survey = SurveyRegistry.get_survey(1)
+    expected_survey = survey_registry.get_survey(1)
+    assert expected_survey is not None
     survey_id = expected_survey.id
     # Prepare answers with an invalid score
     answers = []

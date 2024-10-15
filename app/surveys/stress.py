@@ -19,7 +19,8 @@ class StressScoringMechanism(ScoringMechanism):
 
 
 class StressSurvey(SurveyBase):
-    def __init__(self):
+    def __init__(self) -> None:
+        scoring_mechanism = StressScoringMechanism()
         super().__init__(
             id=2,
             name="Single-Item Stress Measure",
@@ -30,7 +31,9 @@ class StressSurvey(SurveyBase):
                     text="On a scale from 1 to 5, how stressed have you felt this week?",  # noqa
                     scale_min=1,
                     scale_max=5,
+                    reverse_scored=False,
                 ),
             ],
+            scoring_mechanism=scoring_mechanism,
         )
         self.scoring_mechanism = StressScoringMechanism()

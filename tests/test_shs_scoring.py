@@ -6,11 +6,11 @@ from app.models import AnswerBase
 
 
 @pytest.fixture
-def shs_survey():
+def shs_survey() -> SHSSurvey:
     return SHSSurvey()
 
 
-def test_shs_scoring_valid_input(shs_survey):
+def test_shs_scoring_valid_input(shs_survey: SHSSurvey) -> None:
     answers = [
         AnswerBase(question_id=1, score=5),
         AnswerBase(question_id=2, score=6),
@@ -18,10 +18,10 @@ def test_shs_scoring_valid_input(shs_survey):
         AnswerBase(question_id=4, score=2),
     ]
     scores = shs_survey.scoring_mechanism.calculate_score(answers, shs_survey.questions)
-    assert scores["happiness_score"] == 5.25  # Updated expected value
+    assert scores["happiness_score"] == 5.25
 
 
-def test_shs_scoring_reverse_item(shs_survey):
+def test_shs_scoring_reverse_item(shs_survey: SHSSurvey) -> None:
     answers = [
         AnswerBase(question_id=4, score=2),  # Reverse-scored
     ]

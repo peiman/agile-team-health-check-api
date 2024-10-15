@@ -1,0 +1,1687 @@
+================== DIRECTORY STRUCTURE ==================
+.
+├── .flake8
+├── .github
+│   └── workflows
+│       └── ci.yml
+├── .gitignore
+├── .pre-commit-config.yaml
+├── Dockerfile
+├── LICENSE
+├── Makefile
+├── README.md
+├── app
+│   ├── __init__.py
+│   ├── exceptions.py
+│   ├── main.py
+│   ├── models.py
+│   ├── repositories
+│   │   ├── __init__.py
+│   │   └── assessment_repository.py
+│   ├── scoring.py
+│   ├── survey_registry.py
+│   └── surveys
+│       ├── __init__.py
+│       ├── shs.py
+│       └── stress.py
+├── pyproject.toml
+├── requirements-dev.in
+├── requirements-dev.txt
+├── requirements.in
+├── requirements.txt
+└── tests
+    ├── __init__.py
+    ├── test_api.py
+    ├── test_main.py
+    └── test_shs_scoring.py
+
+7 directories, 28 files
+================== END OF DIRECTORY STRUCTURE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: .flake8
+Metadata: Size: 30 bytes, Last Modified: Oct 15 02:39:34 2024
+================== START OF FILE ==================
+[flake8]
+max-line-length = 88
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: .github/workflows/ci.yml
+Metadata: Size: 744 bytes, Last Modified: Oct 15 01:40:28 2024
+================== START OF FILE ==================
+# .github/workflows/ci.yml
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    # Initialize and install dependencies
+    - name: Initialize and install dependencies
+      run: |
+        make install-dev
+
+    # Install pre-commit hooks
+    - name: Install pre-commit hooks
+      run: |
+        make pre-commit
+
+    # Run pre-commit hooks (formatting and linting)
+    - name: Run pre-commit hooks
+      run: |
+        pre-commit run --all-files
+
+    # Run tests
+    - name: Run tests
+      run: |
+        make test
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: .gitignore
+Metadata: Size: 735 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# Python
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Virtual Environments
+env/
+venv/
+ENV/
+venv.bak/
+.venv/
+
+# FastAPI specific
+instance/
+*.db
+*.sqlite3
+
+# Docker
+*.env
+Dockerfile*
+docker-compose.yml
+docker-compose*.yml
+.dockerignore
+
+# Ignore local development files
+.vscode/
+.idea/
+*.swp
+
+# Ignore distribution/build directories
+dist/
+build/
+*.wheel
+
+# Ignore Python bytecode and logs
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Ignore coverage reports
+.coverage
+*.cover
+.hypothesis/
+
+# Ignore test cache directories
+.tox/
+.nox/
+
+# Ignore pytest
+.pytest_cache/
+
+# Ignore mypy type checking results
+.mypy_cache/
+.dmypy.json
+.dmypy.json.5
+
+# Ignore bandit security linter files
+.bandit
+
+# Ignore generated API docs
+/docs/_build/
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: .pre-commit-config.yaml
+Metadata: Size: 1293 bytes, Last Modified: Oct 15 03:04:37 2024
+================== START OF FILE ==================
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.10.0  # Use the latest stable release
+    hooks:
+      - id: black
+        args: ["--line-length", "88"]  # Automatically formats code to 88 characters per line
+        language_version: python3.9
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1  # Use the latest stable release
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-bugbear]
+        args: ["--max-line-length=88"]  # Ensures Flake8 follows the 88 character limit
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace  # Removes trailing whitespace
+      - id: end-of-file-fixer  # Ensures files end with a newline
+      - id: check-yaml  # Checks YAML file formatting
+
+  # Mypy hook for type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1  # Use the latest stable release
+    hooks:
+      - id: mypy
+        args: ["--strict"]  # Enable strict type checking (optional, can be customized)
+
+  # # Bandit hook for security checks
+  # - repo: https://github.com/PyCQA/bandit
+  #   rev: 1.7.5  # Use the latest stable release
+  #   hooks:
+  #     - id: bandit
+  #       args: ["-r", "app/"]  # Recursively scan your "app/" directory for security issues
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: Dockerfile
+Metadata: Size: 428 bytes, Last Modified: Oct 15 00:18:58 2024
+================== START OF FILE ==================
+# Dockerfile
+
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy requirements.txt
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the project files
+COPY . .
+
+# Expose port 80
+EXPOSE 80
+
+# Command to run when the container starts
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: LICENSE
+Metadata: Size: 1076 bytes, Last Modified: Oct 15 00:18:58 2024
+================== START OF FILE ==================
+MIT License
+
+Copyright (c) 2024 Peiman Khorramshahi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: Makefile
+Metadata: Size: 1676 bytes, Last Modified: Oct 15 02:49:01 2024
+================== START OF FILE ==================
+# Makefile
+
+.PHONY: run-dev install-dev install-prod compile-dev compile-prod test run docker-build docker-run docker-stop docker-remove docker-restart docker-clean init pre-commit lint format
+
+# Initialize the environment by installing pip-tools
+init:
+	pip install pip-tools
+
+# Compile production dependencies
+compile-prod: init
+	pip-compile requirements.in
+
+# Compile development dependencies
+compile-dev: compile-prod
+	pip-compile requirements-dev.in -o requirements-dev.txt
+
+# Install production dependencies
+install-prod: compile-prod
+	pip-sync requirements.txt
+
+# Install development dependencies
+install-dev: install-prod compile-dev
+	pip-sync requirements-dev.txt
+
+# Install pre-commit hooks
+pre-commit: install-dev
+	pre-commit install
+
+# Format code using Black
+format:
+	black app/ tests/
+
+# Lint code using Flake8
+lint:
+	flake8 app/ tests/
+
+# Run tests
+test:
+	python -m pytest
+
+# Default target to setup everything for development and run tests
+run-dev: install-dev pre-commit lint test
+
+# Run the application locally
+run:
+	uvicorn app.main:app --reload
+
+# Build the Docker image
+docker-build: compile-prod
+	docker build -t agile-health-check-api .
+
+# Stop the Docker container if it's running
+docker-stop:
+	docker stop agile-health-check-api || true
+
+# Remove the Docker container if it exists
+docker-remove:
+	docker rm agile-health-check-api || true
+
+# Run the Docker container with a specific name
+docker-run: docker-stop docker-remove
+	docker run -d -p 80:80 --name agile-health-check-api agile-health-check-api
+
+# Rebuild the image and restart the container
+docker-restart: docker-build docker-run
+
+# Remove dangling images
+docker-clean:
+	docker image prune -f
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: README.md
+Metadata: Size: 6773 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# Agile Team Health Check API
+
+![Build Status](https://github.com/peiman/agile-team-health-check-api/actions/workflows/ci.yml/badge.svg)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+An API for measuring and visualizing the health of Agile teams using survey instruments.
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [API Documentation](#api-documentation)
+- [Installation](#installation)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+- [Usage](#usage)
+  - [Makefile Commands](#makefile-commands)
+  - [Running Locally](#running-locally)
+  - [Using Docker](#using-docker)
+- [Available Surveys](#available-surveys)
+- [Running Tests](#running-tests)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+
+## Introduction
+
+The Agile Team Health Check API provides endpoints to conduct surveys, calculate scores, and help Agile teams assess their well-being and performance. It includes built-in surveys like the Subjective Happiness Scale (SHS) and the Single-Item Stress Measure.
+
+## Features
+
+- **RESTful API** built with FastAPI
+- **Interactive Documentation** with Swagger UI and ReDoc
+- **Modular Design** with support for adding new surveys
+- **Automated Testing** using pytest
+- **Error Handling** and **Logging**
+- **Flexible Survey Management** with a `SurveyRegistry` class
+- **Dependency Management** using pip-tools
+- **Docker Support** for containerization
+
+## API Documentation
+
+The API documentation is available once you run the application:
+
+- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+These provide interactive interfaces to explore and test the API endpoints.
+
+## Installation
+
+### Prerequisites
+
+- **Python 3.7 or higher**
+- **pip**
+- **Make**
+- **Docker** (optional, for containerization)
+
+### Setup
+
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/yourusername/agile-team-health-check-api.git
+   cd agile-team-health-check-api
+   ```
+
+2. **Create a Virtual Environment (Recommended)**
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
+
+3. **Install Development Dependencies**
+
+   ```bash
+   make install-dev
+   ```
+
+   This command will:
+
+   - Compile production dependencies using `pip-compile requirements.in`
+   - Compile development dependencies using `pip-compile requirements-dev.in -o requirements-dev.txt`
+   - Sync production dependencies using `pip-sync requirements.txt`
+   - Sync development dependencies using `pip-sync requirements-dev.txt`
+
+## Usage
+
+### Makefile Commands
+
+The `Makefile` provides a set of commands to manage your project efficiently. Here's a breakdown of the available commands:
+
+- **`make run-dev`**: Compiles development dependencies, installs them, and runs tests.
+
+  ```bash
+  make run-dev
+  ```
+
+- **`make compile-prod`**: Compiles production dependencies.
+
+  ```bash
+  make compile-prod
+  ```
+
+- **`make compile-dev`**: Compiles both production and development dependencies.
+
+  ```bash
+  make compile-dev
+  ```
+
+- **`make install-prod`**: Installs production dependencies.
+
+  ```bash
+  make install-prod
+  ```
+
+- **`make install-dev`**: Installs both production and development dependencies.
+
+  ```bash
+  make install-dev
+  ```
+
+- **`make test`**: Runs the test suite using pytest.
+
+  ```bash
+  make test
+  ```
+
+- **`make run`**: Runs the application locally using Uvicorn.
+
+  ```bash
+  make run
+  ```
+
+- **`make docker-build`**: Builds the Docker image for the application.
+
+  ```bash
+  make docker-build
+  ```
+
+- **`make docker-run`**: Runs the Docker container.
+
+  ```bash
+  make docker-run
+  ```
+
+- **`make docker-stop`**: Stops the running Docker container.
+
+  ```bash
+  make docker-stop
+  ```
+
+- **`make docker-remove`**: Removes the Docker container.
+
+  ```bash
+  make docker-remove
+  ```
+
+- **`make docker-restart`**: Rebuilds and restarts the Docker container.
+
+  ```bash
+  make docker-restart
+  ```
+
+- **`make docker-clean`**: Removes dangling Docker images.
+
+  ```bash
+  make docker-clean
+  ```
+
+### Running Locally
+
+To run the application locally, use the `make run` command:
+
+```bash
+make run
+```
+
+This will start the FastAPI server with hot-reloading enabled. Access the API at [http://localhost:8000](http://localhost:8000).
+
+### Using Docker
+
+1. **Build the Docker Image**
+
+   ```bash
+   make docker-build
+   ```
+
+2. **Run the Docker Container**
+
+   ```bash
+   make docker-run
+   ```
+
+   This will start the container in detached mode, mapping port `80` of the container to port `80` on your host.
+
+3. **Stop the Docker Container**
+
+   ```bash
+   make docker-stop
+   ```
+
+4. **Remove the Docker Container**
+
+   ```bash
+   make docker-remove
+   ```
+
+5. **Rebuild and Restart the Docker Container**
+
+   ```bash
+   make docker-restart
+   ```
+
+6. **Clean Up Dangling Images**
+
+   ```bash
+   make docker-clean
+   ```
+
+## Available Surveys
+
+The API currently includes the following surveys:
+
+1. **Subjective Happiness Scale (SHS)**
+   - **ID**: 1
+   - **Type**: Weekly
+   - **Questions**: 4
+
+2. **Single-Item Stress Measure**
+   - **ID**: 2
+   - **Type**: Weekly
+   - **Questions**: 1
+
+### Listing All Surveys
+
+Retrieve a list of all available surveys:
+
+```bash
+GET http://localhost:8000/surveys/
+```
+
+### Getting Survey Details
+
+Retrieve detailed information about a specific survey, including its questions:
+
+```bash
+GET http://localhost:8000/surveys/{survey_id}
+```
+
+Replace `{survey_id}` with the actual survey ID (e.g., `1` or `2`).
+
+### Submitting Survey Responses
+
+Submit responses to a survey to receive a calculated assessment result:
+
+```bash
+POST http://localhost:8000/surveys/{survey_id}/responses
+```
+
+**Payload Example:**
+
+```json
+{
+  "survey_id": 1,
+  "answers": [
+    {"question_id": 1, "score": 5},
+    {"question_id": 2, "score": 6},
+    {"question_id": 3, "score": 3},
+    {"question_id": 4, "score": 2}
+  ],
+  "timestamp": "2023-10-14T12:00:00Z"
+}
+```
+
+## Running Tests
+
+Ensure all tests pass to verify the integrity of the application:
+
+```bash
+make test
+```
+
+Or directly with:
+
+```bash
+python -m pytest
+```
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. **Fork the Repository**
+
+2. **Create a Feature Branch**
+
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+3. **Make Changes and Commit**
+
+   ```bash
+   git add .
+   git commit -m "Add your descriptive commit message"
+   ```
+
+4. **Push to Your Fork**
+
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+5. **Create a Pull Request**
+
+   Open a pull request on the main repository with a description of your changes.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/__init__.py
+Metadata: Size: 0 bytes, Last Modified: Oct 15 00:18:58 2024
+================== START OF FILE ==================
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/exceptions.py
+Metadata: Size: 132 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# app/exceptions.py
+
+
+class InvalidAnswerException(Exception):
+    def __init__(self, message: str):
+        self.message = message
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/main.py
+Metadata: Size: 6416 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# app/main.py
+
+import logging
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from typing import List
+from .models import (
+    ResponseBase,
+    AssessmentResultBase,
+    QuestionBase,
+    SurveyModel,
+    SurveySummary,
+)
+from .survey_registry import SurveyRegistry
+from .repositories.assessment_repository import AssessmentRepository
+from .exceptions import InvalidAnswerException
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Create the FastAPI app with metadata
+app = FastAPI(
+    title="Agile Team Health Check API",
+    description="An API for measuring and visualizing the health of Agile teams using survey instruments.",  # noqa
+    version="0.1.0",
+    contact={
+        "name": "Peiman Khorramshahi",
+        "url": "https://peiman.se",
+        "email": "peiman@khorramshahi.com",
+    },
+)
+
+assessment_repository = AssessmentRepository()
+
+
+@app.exception_handler(InvalidAnswerException)
+async def invalid_answer_exception_handler(
+    request: Request, exc: InvalidAnswerException
+):
+    logger.error(f"InvalidAnswerException: {exc.message}")
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.message},
+    )
+
+
+@app.get("/", summary="Root Greeting", tags=["General"])
+async def root():
+    """
+    Returns a simple greeting message.
+
+    - **Returns**: A greeting message as a dictionary.
+    """
+    return {"message": "Hello agile team"}
+
+
+@app.get(
+    "/surveys/",
+    response_model=List[SurveySummary],
+    summary="Get List of Surveys",
+    tags=["Surveys"],
+)
+async def list_surveys():
+    """
+    Retrieve a list of all available surveys.
+
+    - **Returns**: A list of surveys with their IDs, names, and types.
+    """
+    logger.info("Fetching list of all surveys")
+    survey_summaries = [
+        SurveySummary(id=survey.id, name=survey.name, survey_type=survey.survey_type)
+        for survey in SurveyRegistry.list_surveys()
+    ]
+    return survey_summaries
+
+
+@app.get(
+    "/surveys/{survey_id}",
+    response_model=SurveyModel,
+    summary="Get Survey Details",
+    tags=["Surveys"],
+)
+async def get_survey_details(survey_id: int):
+    """
+    Retrieve the details of a given survey, including its questions.
+
+    - **survey_id**: The ID of the survey.
+    - **Returns**: The survey details.
+    """
+    logger.info(f"Fetching details for survey_id: {survey_id}")
+    survey = SurveyRegistry.get_survey(survey_id)
+    if not survey:
+        logger.error(f"Survey with ID {survey_id} not found.")
+        raise HTTPException(status_code=404, detail="Survey not found")
+    # Convert SurveyBase instance to SurveyModel
+    survey_model = SurveyModel(
+        id=survey.id,
+        name=survey.name,
+        survey_type=survey.survey_type,
+        questions=survey.questions,
+    )
+    return survey_model
+
+
+@app.get(
+    "/surveys/{survey_id}/questions",
+    response_model=List[QuestionBase],
+    summary="Get Survey Questions",
+    tags=["Surveys"],
+)
+async def get_survey_questions(survey_id: int):
+    """
+    Retrieve the list of questions for a given survey.
+
+    - **survey_id**: The ID of the survey.
+    - **Returns**: A list of questions with their details.
+    """
+    logger.info(f"Fetching questions for survey_id: {survey_id}")
+    survey = SurveyRegistry.get_survey(survey_id)
+    if not survey:
+        logger.error(f"Survey with ID {survey_id} not found.")
+        raise HTTPException(status_code=404, detail="Survey not found")
+    return survey.questions
+
+
+@app.post(
+    "/surveys/{survey_id}/responses",
+    response_model=AssessmentResultBase,
+    summary="Submit Survey Response",
+    tags=["Surveys"],
+)
+async def submit_survey_response(
+    survey_id: int, response: ResponseBase, request: Request
+):
+    """
+    Submit responses for a survey and receive the calculated assessment result.
+
+    - **survey_id**: The ID of the survey.
+    - **response**: The survey responses submitted by the user.
+    - **Returns**: The assessment result including calculated scores.
+    """
+    logger.info(
+        f"Submitting response for survey_id: {survey_id} from {request.client.host}"
+    )
+    survey = SurveyRegistry.get_survey(survey_id)
+    if not survey:
+        logger.error(f"Survey with ID {survey_id} not found.")
+        raise HTTPException(status_code=404, detail="Survey not found")
+
+    # Validate that all required questions have been answered
+    required_question_ids = {q.id for q in survey.questions}
+    answered_question_ids = {a.question_id for a in response.answers}
+    if required_question_ids != answered_question_ids:
+        missing_questions = required_question_ids - answered_question_ids
+        logger.error(
+            f"Incomplete set of answers. Missing questions: {missing_questions}"
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Incomplete set of answers. Missing questions: {missing_questions}",
+        )
+
+    # Validate answers
+    for answer in response.answers:
+        question = next(
+            (q for q in survey.questions if q.id == answer.question_id), None
+        )
+        if not question:
+            logger.error(f"Invalid question ID {answer.question_id} in response.")
+            raise InvalidAnswerException(f"Invalid question ID {answer.question_id}.")
+        if not (question.scale_min <= answer.score <= question.scale_max):
+            logger.error(
+                f"Score for question ID {answer.question_id} must be between "
+                f"{question.scale_min} and {question.scale_max}."
+            )
+            raise InvalidAnswerException(
+                f"Score for question ID {answer.question_id} must be between "
+                f"{question.scale_min} and {question.scale_max}."
+            )
+
+    # Calculate scores
+    scores = survey.scoring_mechanism.calculate_score(
+        response.answers, survey.questions
+    )
+    logger.debug(f"Calculated scores: {scores}")
+
+    # Create assessment result
+    assessment = AssessmentResultBase(
+        id=0,  # ID will be set by repository
+        survey_id=survey_id,
+        scores=scores,
+        timestamp=response.timestamp,
+    )
+    saved_assessment = assessment_repository.save(assessment)
+    logger.info(f"Assessment {saved_assessment.id} saved successfully.")
+    return saved_assessment
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/models.py
+Metadata: Size: 3334 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# app/models.py
+
+from typing import List, Dict
+from pydantic import BaseModel, Field
+from datetime import datetime
+from enum import Enum
+
+
+class SurveyType(str, Enum):
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+
+
+class QuestionBase(BaseModel):
+    id: int = Field(..., description="Unique identifier for the question")
+    text: str = Field(..., description="The question text")
+    scale_min: int = Field(..., description="Minimum value for the scale")
+    scale_max: int = Field(..., description="Maximum value for the scale")
+    reverse_scored: bool = Field(
+        False, description="Indicates if the question is reverse-scored"
+    )
+
+
+class AnswerBase(BaseModel):
+    question_id: int = Field(..., description="ID of the question being answered")
+    score: float = Field(..., description="Score given for the question")
+
+
+class SurveyBase:
+    """
+    Represents a survey instrument with its associated questions and scoring mechanism.
+
+    Attributes:
+        id (int): Unique identifier for the survey.
+        name (str): Name of the survey.
+        survey_type (SurveyType): Type of the survey (e.g., weekly, monthly).
+        questions (List[QuestionBase]): List of questions included in the survey.
+    """
+
+    def __init__(
+        self, id: int, name: str, survey_type: SurveyType, questions: List[QuestionBase]
+    ):
+        self.id = id
+        self.name = name
+        self.survey_type = survey_type
+        self.questions = questions
+
+
+class SurveyModel(BaseModel):
+    """
+    Pydantic model representing a survey, used for API responses.
+
+    Attributes:
+        id (int): Unique identifier for the survey.
+        name (str): Name of the survey.
+        survey_type (SurveyType): Type of the survey.
+        questions (List[QuestionBase]): List of questions included in the survey.
+    """
+
+    id: int = Field(..., description="Unique identifier for the survey")
+    name: str = Field(..., description="Name of the survey")
+    survey_type: SurveyType = Field(..., description="Type of the survey")
+    questions: List[QuestionBase] = Field(
+        ..., description="List of questions included in the survey"
+    )
+
+
+class SurveySummary(BaseModel):
+    """
+    Pydantic model representing a summary of a survey.
+
+    Attributes:
+        id (int): Unique identifier for the survey.
+        name (str): Name of the survey.
+        survey_type (SurveyType): Type of the survey.
+    """
+
+    id: int = Field(..., description="Unique identifier for the survey")
+    name: str = Field(..., description="Name of the survey")
+    survey_type: SurveyType = Field(..., description="Type of the survey")
+
+
+class ResponseBase(BaseModel):
+    survey_id: int = Field(..., description="ID of the survey being responded to")
+    answers: List[AnswerBase] = Field(..., description="List of answers")
+    timestamp: datetime = Field(
+        ..., description="Timestamp of when the response was submitted"
+    )
+
+
+class AssessmentResultBase(BaseModel):
+    id: int = Field(..., description="Unique identifier for the assessment result")
+    survey_id: int = Field(..., description="ID of the survey")
+    scores: Dict[str, float] = Field(
+        ..., description="Calculated scores from the responses"
+    )
+    timestamp: datetime = Field(
+        ..., description="Timestamp of when the assessment was created"
+    )
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/repositories/__init__.py
+Metadata: Size: 0 bytes, Last Modified: Oct 15 00:18:58 2024
+================== START OF FILE ==================
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/repositories/assessment_repository.py
+Metadata: Size: 588 bytes, Last Modified: Oct 15 00:18:58 2024
+================== START OF FILE ==================
+# app/repositories/assessment_repository.py
+
+from typing import Dict
+from ..models import AssessmentResultBase
+
+
+class AssessmentRepository:
+    def __init__(self):
+        self.assessments: Dict[int, AssessmentResultBase] = {}
+        self.next_id = 1
+
+    def save(self, assessment: AssessmentResultBase) -> AssessmentResultBase:
+        assessment.id = self.next_id
+        self.assessments[self.next_id] = assessment
+        self.next_id += 1
+        return assessment
+
+    def get(self, assessment_id: int) -> AssessmentResultBase:
+        return self.assessments.get(assessment_id)
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/scoring.py
+Metadata: Size: 316 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# app/scoring.py
+
+from abc import ABC, abstractmethod
+from typing import Dict, List
+from .models import AnswerBase, QuestionBase
+
+
+class ScoringMechanism(ABC):
+    @abstractmethod
+    def calculate_score(
+        self, answers: List[AnswerBase], questions: List[QuestionBase]
+    ) -> Dict[str, float]:
+        pass
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/survey_registry.py
+Metadata: Size: 776 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# app/survey_registry.py
+
+from typing import Dict, List
+from .surveys.shs import SHSSurvey
+from .surveys.stress import StressSurvey
+from .models import SurveyBase
+
+
+class SurveyRegistry:
+    """
+    Registry for managing surveys.
+    """
+
+    def __init__(self):
+        self._surveys: Dict[int, SurveyBase] = {}
+
+    def register_survey(self, survey: SurveyBase):
+        self._surveys[survey.id] = survey
+
+    def get_survey(self, survey_id: int) -> SurveyBase:
+        return self._surveys.get(survey_id)
+
+    def list_surveys(self) -> List[SurveyBase]:
+        return list(self._surveys.values())
+
+
+# Instantiate the registry and register surveys
+SurveyRegistry = SurveyRegistry()
+SurveyRegistry.register_survey(SHSSurvey())
+SurveyRegistry.register_survey(StressSurvey())
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/surveys/__init__.py
+Metadata: Size: 0 bytes, Last Modified: Oct 15 00:18:58 2024
+================== START OF FILE ==================
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/surveys/shs.py
+Metadata: Size: 2436 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# app/surveys/shs.py
+
+from typing import List, Dict
+from ..models import SurveyBase, QuestionBase, AnswerBase, SurveyType
+from ..scoring import ScoringMechanism
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class SHSScoringMechanism(ScoringMechanism):
+    def calculate_score(
+        self, answers: List[AnswerBase], questions: List[QuestionBase]
+    ) -> Dict[str, float]:
+        total_score = 0
+        for answer in answers:
+            question = next((q for q in questions if q.id == answer.question_id), None)
+            if not question:
+                logger.warning(
+                    f"Question ID {answer.question_id} not found in SHS questions."
+                )
+                continue
+            score = answer.score
+            if question.reverse_scored:
+                score = question.scale_max + question.scale_min - score
+                logger.debug(
+                    f"Reverse-scored question {question.id}: "
+                    f"original score {answer.score}, reversed score {score}"
+                )
+            total_score += score
+        average_score = total_score / len(questions)
+        logger.info(f"Calculated happiness score: {average_score}")
+        return {"happiness_score": round(average_score, 2)}
+
+
+class SHSSurvey(SurveyBase):
+    def __init__(self):
+        super().__init__(
+            id=1,
+            name="Subjective Happiness Scale",
+            survey_type=SurveyType.WEEKLY,
+            questions=[
+                QuestionBase(
+                    id=1,
+                    text="In general, I consider myself:",
+                    scale_min=1,
+                    scale_max=7,
+                ),
+                QuestionBase(
+                    id=2,
+                    text="Compared to most of my peers, I consider myself:",
+                    scale_min=1,
+                    scale_max=7,
+                ),
+                QuestionBase(
+                    id=3,
+                    text="Some people are generally very happy...",
+                    scale_min=1,
+                    scale_max=7,
+                ),
+                QuestionBase(
+                    id=4,
+                    text="Some people are generally not very happy...",
+                    scale_min=1,
+                    scale_max=7,
+                    reverse_scored=True,
+                ),
+            ],
+        )
+        self.scoring_mechanism = SHSScoringMechanism()
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: app/surveys/stress.py
+Metadata: Size: 1137 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# app/surveys/stress.py
+
+from typing import List, Dict
+from ..models import SurveyBase, QuestionBase, AnswerBase, SurveyType
+from ..scoring import ScoringMechanism
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class StressScoringMechanism(ScoringMechanism):
+    def calculate_score(
+        self, answers: List[AnswerBase], questions: List[QuestionBase]
+    ) -> Dict[str, float]:
+        # Assuming only one answer for the stress question
+        stress_score = answers[0].score
+        logger.info(f"Calculated stress score: {stress_score}")
+        return {"stress_score": stress_score}
+
+
+class StressSurvey(SurveyBase):
+    def __init__(self):
+        super().__init__(
+            id=2,
+            name="Single-Item Stress Measure",
+            survey_type=SurveyType.WEEKLY,
+            questions=[
+                QuestionBase(
+                    id=5,
+                    text="On a scale from 1 to 5, how stressed have you felt this week?",  # noqa
+                    scale_min=1,
+                    scale_max=5,
+                ),
+            ],
+        )
+        self.scoring_mechanism = StressScoringMechanism()
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: pyproject.toml
+Metadata: Size: 453 bytes, Last Modified: Oct 15 01:40:28 2024
+================== START OF FILE ==================
+# pyproject.toml
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # Whitespace before ':'
+    "W503",  # Line break before binary operator
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "venv",
+    "env",
+    "build",
+    "dist",
+]
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: requirements-dev.in
+Metadata: Size: 94 bytes, Last Modified: Oct 15 03:12:41 2024
+================== START OF FILE ==================
+# requirements-dev.in
+
+-r requirements.in
+pytest
+httpx
+pip-tools
+black
+flake8
+mypy
+pre-commit
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: requirements-dev.txt
+Metadata: Size: 2750 bytes, Last Modified: Oct 15 03:10:46 2024
+================== START OF FILE ==================
+#
+# This file is autogenerated by pip-compile with Python 3.9
+# by the following command:
+#
+#    pip-compile --output-file=requirements-dev.txt requirements-dev.in
+#
+annotated-types==0.7.0
+    # via pydantic
+anyio==4.6.2.post1
+    # via
+    #   httpx
+    #   starlette
+    #   watchfiles
+black==24.10.0
+    # via -r requirements-dev.in
+build==1.2.2.post1
+    # via pip-tools
+certifi==2024.8.30
+    # via
+    #   httpcore
+    #   httpx
+cfgv==3.4.0
+    # via pre-commit
+click==8.1.7
+    # via
+    #   black
+    #   pip-tools
+    #   uvicorn
+distlib==0.3.9
+    # via virtualenv
+exceptiongroup==1.2.2
+    # via
+    #   anyio
+    #   pytest
+fastapi==0.115.2
+    # via -r requirements.in
+filelock==3.16.1
+    # via virtualenv
+flake8==7.1.1
+    # via -r requirements-dev.in
+h11==0.14.0
+    # via
+    #   httpcore
+    #   uvicorn
+httpcore==1.0.6
+    # via httpx
+httptools==0.6.2
+    # via uvicorn
+httpx==0.27.2
+    # via -r requirements-dev.in
+identify==2.6.1
+    # via pre-commit
+idna==3.10
+    # via
+    #   anyio
+    #   httpx
+importlib-metadata==8.5.0
+    # via build
+iniconfig==2.0.0
+    # via pytest
+mccabe==0.7.0
+    # via flake8
+mypy==1.12.0
+    # via -r requirements-dev.in
+mypy-extensions==1.0.0
+    # via
+    #   black
+    #   mypy
+nodeenv==1.9.1
+    # via pre-commit
+packaging==24.1
+    # via
+    #   black
+    #   build
+    #   pytest
+pathspec==0.12.1
+    # via black
+pip-tools==7.4.1
+    # via -r requirements-dev.in
+platformdirs==4.3.6
+    # via
+    #   black
+    #   virtualenv
+pluggy==1.5.0
+    # via pytest
+pre-commit==4.0.1
+    # via -r requirements-dev.in
+pycodestyle==2.12.1
+    # via flake8
+pydantic==2.9.2
+    # via
+    #   -r requirements-dev.in
+    #   -r requirements.in
+    #   fastapi
+pydantic-core==2.23.4
+    # via pydantic
+pyflakes==3.2.0
+    # via flake8
+pyproject-hooks==1.2.0
+    # via
+    #   build
+    #   pip-tools
+pytest==8.3.3
+    # via -r requirements-dev.in
+python-dotenv==1.0.1
+    # via
+    #   -r requirements.in
+    #   uvicorn
+pyyaml==6.0.2
+    # via
+    #   pre-commit
+    #   uvicorn
+sniffio==1.3.1
+    # via
+    #   anyio
+    #   httpx
+starlette==0.39.2
+    # via fastapi
+tomli==2.0.2
+    # via
+    #   black
+    #   build
+    #   mypy
+    #   pip-tools
+    #   pytest
+typing-extensions==4.12.2
+    # via
+    #   anyio
+    #   black
+    #   fastapi
+    #   mypy
+    #   pydantic
+    #   pydantic-core
+    #   starlette
+    #   uvicorn
+uvicorn[standard]==0.31.1
+    # via -r requirements.in
+uvloop==0.20.0
+    # via uvicorn
+virtualenv==20.26.6
+    # via pre-commit
+watchfiles==0.24.0
+    # via uvicorn
+websockets==13.1
+    # via uvicorn
+wheel==0.44.0
+    # via pip-tools
+zipp==3.20.2
+    # via importlib-metadata
+
+# The following packages are considered to be unsafe in a requirements file:
+# pip
+# setuptools
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: requirements.in
+Metadata: Size: 68 bytes, Last Modified: Oct 15 00:18:58 2024
+================== START OF FILE ==================
+# requirements.in
+
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: requirements.txt
+Metadata: Size: 1024 bytes, Last Modified: Oct 15 03:10:42 2024
+================== START OF FILE ==================
+#
+# This file is autogenerated by pip-compile with Python 3.9
+# by the following command:
+#
+#    pip-compile requirements.in
+#
+annotated-types==0.7.0
+    # via pydantic
+anyio==4.6.2.post1
+    # via
+    #   starlette
+    #   watchfiles
+click==8.1.7
+    # via uvicorn
+exceptiongroup==1.2.2
+    # via anyio
+fastapi==0.115.2
+    # via -r requirements.in
+h11==0.14.0
+    # via uvicorn
+httptools==0.6.2
+    # via uvicorn
+idna==3.10
+    # via anyio
+pydantic==2.9.2
+    # via
+    #   -r requirements.in
+    #   fastapi
+pydantic-core==2.23.4
+    # via pydantic
+python-dotenv==1.0.1
+    # via
+    #   -r requirements.in
+    #   uvicorn
+pyyaml==6.0.2
+    # via uvicorn
+sniffio==1.3.1
+    # via anyio
+starlette==0.39.2
+    # via fastapi
+typing-extensions==4.12.2
+    # via
+    #   anyio
+    #   fastapi
+    #   pydantic
+    #   pydantic-core
+    #   starlette
+    #   uvicorn
+uvicorn[standard]==0.31.1
+    # via -r requirements.in
+uvloop==0.20.0
+    # via uvicorn
+watchfiles==0.24.0
+    # via uvicorn
+websockets==13.1
+    # via uvicorn
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: tests/__init__.py
+Metadata: Size: 0 bytes, Last Modified: Oct 15 00:18:58 2024
+================== START OF FILE ==================
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: tests/test_api.py
+Metadata: Size: 4429 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# tests/test_api.py
+
+from fastapi.testclient import TestClient
+from app.main import app
+from app.survey_registry import SurveyRegistry
+
+client = TestClient(app)
+
+
+def test_root_endpoint():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Hello agile team"}
+
+
+def test_list_surveys():
+    response = client.get("/surveys/")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+
+    # Get expected surveys from the SurveyRegistry
+    expected_surveys = SurveyRegistry.list_surveys()
+    assert len(data) == len(expected_surveys)
+
+    # Map response data by survey ID for easy lookup
+    response_surveys = {survey["id"]: survey for survey in data}
+
+    for expected_survey in expected_surveys:
+        survey_id = expected_survey.id
+        assert survey_id in response_surveys
+        response_survey = response_surveys[survey_id]
+        assert response_survey["name"] == expected_survey.name
+        assert response_survey["survey_type"] == expected_survey.survey_type.value
+
+
+def test_get_survey_details():
+    # Get a survey ID from the SurveyRegistry
+    survey_ids = [survey.id for survey in SurveyRegistry.list_surveys()]
+    survey_id = survey_ids[0]  # Test with the first survey
+
+    response = client.get(f"/surveys/{survey_id}")
+    assert response.status_code == 200
+    data = response.json()
+    expected_survey = SurveyRegistry.get_survey(survey_id)
+    assert data["id"] == expected_survey.id
+    assert data["name"] == expected_survey.name
+    assert data["survey_type"] == expected_survey.survey_type.value
+    assert len(data["questions"]) == len(expected_survey.questions)
+
+
+def test_get_survey_questions():
+    # Get a survey ID from the SurveyRegistry
+    survey_ids = [survey.id for survey in SurveyRegistry.list_surveys()]
+    survey_id = survey_ids[0]  # Test with the first survey
+
+    response = client.get(f"/surveys/{survey_id}/questions")
+    assert response.status_code == 200
+    data = response.json()
+    expected_survey = SurveyRegistry.get_survey(survey_id)
+    assert len(data) == len(expected_survey.questions)
+
+
+def test_submit_survey_response_valid():
+    # Get a survey from the SurveyRegistry
+    expected_survey = SurveyRegistry.get_survey(1)
+    survey_id = expected_survey.id
+    # Prepare answers with valid scores within the scale
+    answers = []
+    for question in expected_survey.questions:
+        score = (question.scale_min + question.scale_max) / 2  # Middle of the scale
+        answers.append({"question_id": question.id, "score": score})
+    response = client.post(
+        f"/surveys/{survey_id}/responses",
+        json={
+            "survey_id": survey_id,
+            "answers": answers,
+            "timestamp": "2023-10-14T12:00:00Z",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "scores" in data
+
+
+def test_submit_survey_response_missing_answer():
+    # Get a survey from the SurveyRegistry
+    expected_survey = SurveyRegistry.get_survey(1)
+    survey_id = expected_survey.id
+    # Prepare answers but omit one question
+    answers = []
+    for question in expected_survey.questions[:-1]:  # Omit the last question
+        score = (question.scale_min + question.scale_max) / 2
+        answers.append({"question_id": question.id, "score": score})
+    response = client.post(
+        f"/surveys/{survey_id}/responses",
+        json={
+            "survey_id": survey_id,
+            "answers": answers,
+            "timestamp": "2023-10-14T12:00:00Z",
+        },
+    )
+    assert response.status_code == 400
+    assert "Incomplete set of answers" in response.json()["detail"]
+
+
+def test_submit_survey_response_invalid_score():
+    # Get a survey from the SurveyRegistry
+    expected_survey = SurveyRegistry.get_survey(1)
+    survey_id = expected_survey.id
+    # Prepare answers with an invalid score
+    answers = []
+    for question in expected_survey.questions:
+        score = question.scale_max + 1  # Invalid score
+        answers.append({"question_id": question.id, "score": score})
+    response = client.post(
+        f"/surveys/{survey_id}/responses",
+        json={
+            "survey_id": survey_id,
+            "answers": answers,
+            "timestamp": "2023-10-14T12:00:00Z",
+        },
+    )
+    assert response.status_code == 400
+    assert "must be between" in response.json()["detail"]
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: tests/test_main.py
+Metadata: Size: 275 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# tests/test_main.py
+
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+
+def test_root_endpoint():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Hello agile team"}
+================== END OF FILE ==================
+
+================== FILE SEPARATOR ==================
+FILEPATH: tests/test_shs_scoring.py
+Metadata: Size: 965 bytes, Last Modified: Oct 15 02:50:22 2024
+================== START OF FILE ==================
+# tests/test_shs_scoring.py
+
+import pytest
+from app.surveys.shs import SHSSurvey
+from app.models import AnswerBase
+
+
+@pytest.fixture
+def shs_survey():
+    return SHSSurvey()
+
+
+def test_shs_scoring_valid_input(shs_survey):
+    answers = [
+        AnswerBase(question_id=1, score=5),
+        AnswerBase(question_id=2, score=6),
+        AnswerBase(question_id=3, score=4),
+        AnswerBase(question_id=4, score=2),
+    ]
+    scores = shs_survey.scoring_mechanism.calculate_score(answers, shs_survey.questions)
+    assert scores["happiness_score"] == 5.25  # Updated expected value
+
+
+def test_shs_scoring_reverse_item(shs_survey):
+    answers = [
+        AnswerBase(question_id=4, score=2),  # Reverse-scored
+    ]
+    question = next(q for q in shs_survey.questions if q.id == 4)
+    score = answers[0].score
+    if question.reverse_scored:
+        score = question.scale_max + question.scale_min - score
+    assert score == 6  # Reverse of 2 on a scale of 1-7 is 6
+================== END OF FILE ==================

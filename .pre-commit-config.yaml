@@ -19,3 +19,18 @@ repos:
       - id: trailing-whitespace  # Removes trailing whitespace
       - id: end-of-file-fixer  # Ensures files end with a newline
       - id: check-yaml  # Checks YAML file formatting
+
+  # Mypy hook for type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1  # Use the latest stable release
+    hooks:
+      - id: mypy
+        args: ["--strict"]  # Enable strict type checking (optional, can be customized)
+        additional_dependencies: [pydantic, pytest, fastapi, fastapi.responses]
+
+  # # Bandit hook for security checks
+  # - repo: https://github.com/PyCQA/bandit
+  #   rev: 1.7.5  # Use the latest stable release
+  #   hooks:
+  #     - id: bandit
+  #       args: ["-r", "app/"]  # Recursively scan your "app/" directory for security issues

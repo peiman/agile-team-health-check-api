@@ -3,7 +3,7 @@
 import logging
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from typing import List
+from typing import List, Dict
 from .models import (
     ResponseBase,
     AssessmentResultBase,
@@ -11,7 +11,7 @@ from .models import (
     SurveyModel,
     SurveySummary,
 )
-from .survey_registry import SurveyRegistry
+from .survey_registry import survey_registry
 from .repositories.assessment_repository import AssessmentRepository
 from .exceptions import InvalidAnswerException
 
@@ -39,7 +39,7 @@ assessment_repository = AssessmentRepository()
 @app.exception_handler(InvalidAnswerException)
 async def invalid_answer_exception_handler(
     request: Request, exc: InvalidAnswerException
-):
+) -> JSONResponse:
     logger.error(f"InvalidAnswerException: {exc.message}")
     return JSONResponse(
         status_code=400,
@@ -48,7 +48,7 @@ async def invalid_answer_exception_handler(
 
 
 @app.get("/", summary="Root Greeting", tags=["General"])
-async def root():
+async def root() -> Dict[str, str]:
     """
     Returns a simple greeting message.
 
@@ -63,7 +63,7 @@ async def root():
     summary="Get List of Surveys",
     tags=["Surveys"],
 )
-async def list_surveys():
+async def list_surveys() -> List[SurveySummary]:
     """
     Retrieve a list of all available surveys.
 
@@ -72,7 +72,7 @@ async def list_surveys():
     logger.info("Fetching list of all surveys")
     survey_summaries = [
         SurveySummary(id=survey.id, name=survey.name, survey_type=survey.survey_type)
-        for survey in SurveyRegistry.list_surveys()
+        for survey in survey_registry.list_surveys()
     ]
     return survey_summaries
 
@@ -83,7 +83,7 @@ async def list_surveys():
     summary="Get Survey Details",
     tags=["Surveys"],
 )
-async def get_survey_details(survey_id: int):
+async def get_survey_details(survey_id: int) -> SurveyModel:
     """
     Retrieve the details of a given survey, including its questions.
 
@@ -91,7 +91,7 @@ async def get_survey_details(survey_id: int):
     - **Returns**: The survey details.
     """
     logger.info(f"Fetching details for survey_id: {survey_id}")
-    survey = SurveyRegistry.get_survey(survey_id)
+    survey = survey_registry.get_survey(survey_id)
     if not survey:
         logger.error(f"Survey with ID {survey_id} not found.")
         raise HTTPException(status_code=404, detail="Survey not found")
@@ -111,7 +111,7 @@ async def get_survey_details(survey_id: int):
     summary="Get Survey Questions",
     tags=["Surveys"],
 )
-async def get_survey_questions(survey_id: int):
+async def get_survey_questions(survey_id: int) -> List[QuestionBase]:
     """
     Retrieve the list of questions for a given survey.
 
@@ -119,7 +119,7 @@ async def get_survey_questions(survey_id: int):
     - **Returns**: A list of questions with their details.
     """
     logger.info(f"Fetching questions for survey_id: {survey_id}")
-    survey = SurveyRegistry.get_survey(survey_id)
+    survey = survey_registry.get_survey(survey_id)
     if not survey:
         logger.error(f"Survey with ID {survey_id} not found.")
         raise HTTPException(status_code=404, detail="Survey not found")
@@ -134,7 +134,7 @@ async def get_survey_questions(survey_id: int):
 )
 async def submit_survey_response(
     survey_id: int, response: ResponseBase, request: Request
-):
+) -> AssessmentResultBase:
     """
     Submit responses for a survey and receive the calculated assessment result.
 
@@ -142,10 +142,9 @@ async def submit_survey_response(
     - **response**: The survey responses submitted by the user.
     - **Returns**: The assessment result including calculated scores.
     """
-    logger.info(
-        f"Submitting response for survey_id: {survey_id} from {request.client.host}"
-    )
-    survey = SurveyRegistry.get_survey(survey_id)
+    client_host = request.client.host if request.client else "Unknown"
+    logger.info(f"Submitting response for survey_id: {survey_id} from {client_host}")
+    survey = survey_registry.get_survey(survey_id)
     if not survey:
         logger.error(f"Survey with ID {survey_id} not found.")
         raise HTTPException(status_code=404, detail="Survey not found")
