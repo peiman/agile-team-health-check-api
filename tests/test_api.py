@@ -6,30 +6,33 @@ from app.survey_registry import SurveyRegistry
 
 client = TestClient(app)
 
+
 def test_root_endpoint():
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"message": "Hello agile team"}
+
 
 def test_list_surveys():
     response = client.get("/surveys/")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    
+
     # Get expected surveys from the SurveyRegistry
     expected_surveys = SurveyRegistry.list_surveys()
     assert len(data) == len(expected_surveys)
-    
+
     # Map response data by survey ID for easy lookup
-    response_surveys = {survey['id']: survey for survey in data}
-    
+    response_surveys = {survey["id"]: survey for survey in data}
+
     for expected_survey in expected_surveys:
         survey_id = expected_survey.id
         assert survey_id in response_surveys
         response_survey = response_surveys[survey_id]
-        assert response_survey['name'] == expected_survey.name
-        assert response_survey['survey_type'] == expected_survey.survey_type.value
+        assert response_survey["name"] == expected_survey.name
+        assert response_survey["survey_type"] == expected_survey.survey_type.value
+
 
 def test_get_survey_details():
     # Get a survey ID from the SurveyRegistry
@@ -45,6 +48,7 @@ def test_get_survey_details():
     assert data["survey_type"] == expected_survey.survey_type.value
     assert len(data["questions"]) == len(expected_survey.questions)
 
+
 def test_get_survey_questions():
     # Get a survey ID from the SurveyRegistry
     survey_ids = [survey.id for survey in SurveyRegistry.list_surveys()]
@@ -55,6 +59,7 @@ def test_get_survey_questions():
     data = response.json()
     expected_survey = SurveyRegistry.get_survey(survey_id)
     assert len(data) == len(expected_survey.questions)
+
 
 def test_submit_survey_response_valid():
     # Get a survey from the SurveyRegistry
@@ -70,12 +75,13 @@ def test_submit_survey_response_valid():
         json={
             "survey_id": survey_id,
             "answers": answers,
-            "timestamp": "2023-10-14T12:00:00Z"
+            "timestamp": "2023-10-14T12:00:00Z",
         },
     )
     assert response.status_code == 200
     data = response.json()
     assert "scores" in data
+
 
 def test_submit_survey_response_missing_answer():
     # Get a survey from the SurveyRegistry
@@ -91,11 +97,12 @@ def test_submit_survey_response_missing_answer():
         json={
             "survey_id": survey_id,
             "answers": answers,
-            "timestamp": "2023-10-14T12:00:00Z"
+            "timestamp": "2023-10-14T12:00:00Z",
         },
     )
     assert response.status_code == 400
     assert "Incomplete set of answers" in response.json()["detail"]
+
 
 def test_submit_survey_response_invalid_score():
     # Get a survey from the SurveyRegistry
@@ -111,7 +118,7 @@ def test_submit_survey_response_invalid_score():
         json={
             "survey_id": survey_id,
             "answers": answers,
-            "timestamp": "2023-10-14T12:00:00Z"
+            "timestamp": "2023-10-14T12:00:00Z",
         },
     )
     assert response.status_code == 400

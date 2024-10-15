@@ -5,6 +5,7 @@ from .surveys.shs import SHSSurvey
 from .surveys.stress import StressSurvey
 from .models import SurveyBase
 
+
 class SurveyRegistry:
     """
     Registry for managing surveys.
@@ -21,6 +22,7 @@ class SurveyRegistry:
 
     def list_surveys(self) -> List[SurveyBase]:
         return list(self._surveys.values())
+
 
 # Instantiate the registry and register surveys
 SurveyRegistry = SurveyRegistry()

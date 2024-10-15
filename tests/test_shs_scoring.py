@@ -4,9 +4,11 @@ import pytest
 from app.surveys.shs import SHSSurvey
 from app.models import AnswerBase
 
+
 @pytest.fixture
 def shs_survey():
     return SHSSurvey()
+
 
 def test_shs_scoring_valid_input(shs_survey):
     answers = [
@@ -17,6 +19,7 @@ def test_shs_scoring_valid_input(shs_survey):
     ]
     scores = shs_survey.scoring_mechanism.calculate_score(answers, shs_survey.questions)
     assert scores["happiness_score"] == 5.25  # Updated expected value
+
 
 def test_shs_scoring_reverse_item(shs_survey):
     answers = [

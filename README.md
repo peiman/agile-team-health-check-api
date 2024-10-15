@@ -92,79 +92,79 @@ These provide interactive interfaces to explore and test the API endpoints.
 The `Makefile` provides a set of commands to manage your project efficiently. Here's a breakdown of the available commands:
 
 - **`make run-dev`**: Compiles development dependencies, installs them, and runs tests.
-  
+
   ```bash
   make run-dev
   ```
 
 - **`make compile-prod`**: Compiles production dependencies.
-  
+
   ```bash
   make compile-prod
   ```
 
 - **`make compile-dev`**: Compiles both production and development dependencies.
-  
+
   ```bash
   make compile-dev
   ```
 
 - **`make install-prod`**: Installs production dependencies.
-  
+
   ```bash
   make install-prod
   ```
 
 - **`make install-dev`**: Installs both production and development dependencies.
-  
+
   ```bash
   make install-dev
   ```
 
 - **`make test`**: Runs the test suite using pytest.
-  
+
   ```bash
   make test
   ```
 
 - **`make run`**: Runs the application locally using Uvicorn.
-  
+
   ```bash
   make run
   ```
 
 - **`make docker-build`**: Builds the Docker image for the application.
-  
+
   ```bash
   make docker-build
   ```
 
 - **`make docker-run`**: Runs the Docker container.
-  
+
   ```bash
   make docker-run
   ```
 
 - **`make docker-stop`**: Stops the running Docker container.
-  
+
   ```bash
   make docker-stop
   ```
 
 - **`make docker-remove`**: Removes the Docker container.
-  
+
   ```bash
   make docker-remove
   ```
 
 - **`make docker-restart`**: Rebuilds and restarts the Docker container.
-  
+
   ```bash
   make docker-restart
   ```
 
 - **`make docker-clean`**: Removes dangling Docker images.
-  
+
   ```bash
   make docker-clean
   ```
@@ -320,4 +320,3 @@ Contributions are welcome! Please follow these steps:
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
