@@ -28,11 +28,11 @@ pre-commit: install-dev
 
 # Format code using Black
 format:
-	black app/ tests/ Makefile
+	black app/ tests/
 
 # Lint code using Flake8
 lint:
-	flake8 app/ tests/ Makefile
+	flake8 app/ tests/
 
 # Run tests
 test:
