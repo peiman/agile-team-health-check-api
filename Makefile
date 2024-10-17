@@ -1,6 +1,6 @@
-# Makefile
+# filepath: Makefile
 
-.PHONY: run-dev install-dev install-prod compile-dev compile-prod test run docker-build docker-run docker-stop docker-remove docker-restart docker-clean init pre-commit lint format pre-commit-all
+.PHONY: run-dev install-dev install-prod compile-dev compile-prod test run docker-build docker-run docker-stop docker-remove docker-restart docker-clean init pre-commit lint format pre-commit-all docker-compose-up docker-compose-down docker-compose-build
 
 # Initialize the environment by installing pip-tools
 init:
@@ -63,7 +63,7 @@ docker-remove:
 
 # Run the Docker container with a specific name
 docker-run: docker-stop docker-remove
-	docker run -d -p 80:80 --name agile-health-check-api agile-health-check-api
+	docker run -d -p 8000:80 --name agile-health-check-api agile-health-check-api
 
 # Rebuild the image and restart the container
 docker-restart: docker-build docker-run
@@ -71,3 +71,25 @@ docker-restart: docker-build docker-run
 # Remove dangling images
 docker-clean:
 	docker image prune -f
+
+# Docker Compose commands
+docker-compose-build:
+	docker-compose build
+
+docker-compose-up:
+	docker-compose up -d
+
+docker-compose-down:
+	docker-compose down
+
+# Run the application using Docker Compose
+run-docker: docker-compose-build docker-compose-up
+	@echo "Application is running on http://localhost:8000"
+
+# Stop the application and remove containers
+stop-docker:
+	docker-compose down
+
+# Rebuild and restart the application using Docker Compose
+restart-docker: docker-compose-down docker-compose-build docker-compose-up
+	@echo "Application has been rebuilt and restarted on http://localhost:8000"

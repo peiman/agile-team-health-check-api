@@ -1,9 +1,10 @@
 # app/main.py
 
 import logging
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, APIRouter
 from fastapi.responses import JSONResponse
-from typing import List, Dict
+from typing import List, Dict, AsyncIterator
+from contextlib import asynccontextmanager
 from .models import (
     ResponseBase,
     AssessmentResultBase,
@@ -15,25 +16,56 @@ from .survey_registry import survey_registry
 from .repositories.assessment_repository import AssessmentRepository
 from .exceptions import InvalidAnswerException
 
+
+# Function to get the latest tag from Git
+def get_git_version() -> str:
+    try:
+        from git import Repo
+        from git.exc import InvalidGitRepositoryError, GitCommandError
+
+        repo = Repo(search_parent_directories=True)
+        tags = sorted(repo.tags, key=lambda t: t.commit.committed_datetime)
+        return str(tags[-1]) if tags else "No tags found"
+    except (ImportError, InvalidGitRepositoryError, GitCommandError):
+        return "Unable to determine version from Git"
+
+
+# Project version from Git tags or fallback
+PROJECT_VERSION: str = get_git_version()
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Create the FastAPI app with metadata
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # Startup
+    logger.info(f"Starting Agile Team Health Check API, version: {PROJECT_VERSION}")
+    yield
+    # Shutdown
+    logger.info("Shutting down Agile Team Health Check API")
+
+
+# Create the FastAPI app with metadata and lifespan
 app = FastAPI(
     title="Agile Team Health Check API",
-    description="An API for measuring and visualizing the health of Agile teams using survey instruments.",  # noqa
-    version="0.1.0",
+    description="An API for measuring and visualizing the health of Agile teams.",
+    version=PROJECT_VERSION,
     contact={
         "name": "Peiman Khorramshahi",
         "url": "https://peiman.se",
         "email": "peiman@khorramshahi.com",
     },
+    lifespan=lifespan,
 )
 
 assessment_repository = AssessmentRepository()
+
+# Create versioned router
+v1_router = APIRouter(prefix="/v1")
 
 
 @app.exception_handler(InvalidAnswerException)
@@ -50,14 +82,20 @@ async def invalid_answer_exception_handler(
 @app.get("/", summary="Root Greeting", tags=["General"])
 async def root() -> Dict[str, str]:
     """
-    Returns a simple greeting message.
+    Returns a simple greeting message and API information.
 
-    - **Returns**: A greeting message as a dictionary.
+    - **Returns**: A greeting message and API version as a dictionary.
     """
-    return {"message": "Hello agile team"}
+    return {
+        "message": "Welcome to the Agile Team Health Check API",
+        "version": PROJECT_VERSION,
+        "api_version": "v1",
+        "docs_url": "/docs",
+    }
 
 
-@app.get(
+# V1 Endpoints
+@v1_router.get(
     "/surveys/",
     response_model=List[SurveySummary],
     summary="Get List of Surveys",
@@ -77,7 +115,7 @@ async def list_surveys() -> List[SurveySummary]:
     return survey_summaries
 
 
-@app.get(
+@v1_router.get(
     "/surveys/{survey_id}",
     response_model=SurveyModel,
     summary="Get Survey Details",
@@ -95,7 +133,6 @@ async def get_survey_details(survey_id: int) -> SurveyModel:
     if not survey:
         logger.error(f"Survey with ID {survey_id} not found.")
         raise HTTPException(status_code=404, detail="Survey not found")
-    # Convert SurveyBase instance to SurveyModel
     survey_model = SurveyModel(
         id=survey.id,
         name=survey.name,
@@ -105,7 +142,7 @@ async def get_survey_details(survey_id: int) -> SurveyModel:
     return survey_model
 
 
-@app.get(
+@v1_router.get(
     "/surveys/{survey_id}/questions",
     response_model=List[QuestionBase],
     summary="Get Survey Questions",
@@ -126,7 +163,7 @@ async def get_survey_questions(survey_id: int) -> List[QuestionBase]:
     return survey.questions
 
 
-@app.post(
+@v1_router.post(
     "/surveys/{survey_id}/responses",
     response_model=AssessmentResultBase,
     summary="Submit Survey Response",
@@ -196,3 +233,7 @@ async def submit_survey_response(
     saved_assessment = assessment_repository.save(assessment)
     logger.info(f"Assessment {saved_assessment.id} saved successfully.")
     return saved_assessment
+
+
+# Include the v1 router
+app.include_router(v1_router)

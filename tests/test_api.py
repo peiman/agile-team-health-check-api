@@ -11,11 +11,14 @@ client = TestClient(app)
 def test_root_endpoint() -> None:
     response = client.get("/")
     assume(response.status_code == 200)
-    assume(response.json() == {"message": "Hello agile team"})
+    assume(response.json()["message"] == "Welcome to the Agile Team Health Check API")
+    assume("version" in response.json())
+    assume("api_version" in response.json())
+    assume("docs_url" in response.json())
 
 
 def test_list_surveys() -> None:
-    response = client.get("/surveys/")
+    response = client.get("/v1/surveys/")
     assume(response.status_code == 200)
     data = response.json()
     assume(isinstance(data, list))
@@ -40,13 +43,13 @@ def test_get_survey_details() -> None:
     survey_ids = [survey.id for survey in survey_registry.list_surveys()]
     survey_id = survey_ids[0]  # Test with the first survey
 
-    response = client.get(f"/surveys/{survey_id}")
+    response = client.get(f"/v1/surveys/{survey_id}")
     assume(response.status_code == 200)
     data = response.json()
     expected_survey = survey_registry.get_survey(survey_id)
 
     if expected_survey is None:
-        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+        pytest.fail(f"Survey with ID {survey_id} should not be None")
 
     assume(data["id"] == expected_survey.id)
     assume(data["name"] == expected_survey.name)
@@ -59,15 +62,20 @@ def test_get_survey_questions() -> None:
     survey_ids = [survey.id for survey in survey_registry.list_surveys()]
     survey_id = survey_ids[0]  # Test with the first survey
 
-    response = client.get(f"/surveys/{survey_id}/questions")
+    response = client.get(f"/v1/surveys/{survey_id}/questions")
     assume(response.status_code == 200)
     data = response.json()
     expected_survey = survey_registry.get_survey(survey_id)
 
     if expected_survey is None:
-        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+        pytest.fail(f"Survey with ID {survey_id} should not be None")
 
     assume(len(data) == len(expected_survey.questions))
+    for question in data:
+        assume("id" in question)
+        assume("text" in question)
+        assume("scale_min" in question)
+        assume("scale_max" in question)
 
 
 def test_submit_survey_response_valid() -> None:
@@ -75,7 +83,7 @@ def test_submit_survey_response_valid() -> None:
     expected_survey = survey_registry.get_survey(1)
 
     if expected_survey is None:
-        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+        pytest.fail("Survey with ID 1 should not be None")
 
     survey_id = expected_survey.id
     # Prepare answers with valid scores within the scale
@@ -84,7 +92,7 @@ def test_submit_survey_response_valid() -> None:
         score = (question.scale_min + question.scale_max) / 2  # Middle of the scale
         answers.append({"question_id": question.id, "score": score})
     response = client.post(
-        f"/surveys/{survey_id}/responses",
+        f"/v1/surveys/{survey_id}/responses",
         json={
             "survey_id": survey_id,
             "answers": answers,
@@ -101,7 +109,7 @@ def test_submit_survey_response_missing_answer() -> None:
     expected_survey = survey_registry.get_survey(1)
 
     if expected_survey is None:
-        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+        pytest.fail("Survey with ID 1 should not be None")
 
     survey_id = expected_survey.id
     # Prepare answers but omit one question
@@ -110,7 +118,7 @@ def test_submit_survey_response_missing_answer() -> None:
         score = (question.scale_min + question.scale_max) / 2
         answers.append({"question_id": question.id, "score": score})
     response = client.post(
-        f"/surveys/{survey_id}/responses",
+        f"/v1/surveys/{survey_id}/responses",
         json={
             "survey_id": survey_id,
             "answers": answers,
@@ -126,7 +134,7 @@ def test_submit_survey_response_invalid_score() -> None:
     expected_survey = survey_registry.get_survey(1)
 
     if expected_survey is None:
-        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+        pytest.fail("Survey with ID 1 should not be None")
 
     survey_id = expected_survey.id
     # Prepare answers with an invalid score
@@ -135,7 +143,7 @@ def test_submit_survey_response_invalid_score() -> None:
         score = question.scale_max + 1  # Invalid score
         answers.append({"question_id": question.id, "score": score})
     response = client.post(
-        f"/surveys/{survey_id}/responses",
+        f"/v1/surveys/{survey_id}/responses",
         json={
             "survey_id": survey_id,
             "answers": answers,
