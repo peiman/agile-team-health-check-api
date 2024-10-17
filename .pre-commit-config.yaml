@@ -1,3 +1,5 @@
+# .pre-commit-config.yaml
+
 repos:
   - repo: https://github.com/psf/black
     rev: 24.10.0  # Use the latest stable release
@@ -25,12 +27,22 @@ repos:
     rev: v1.5.1  # Use the latest stable release
     hooks:
       - id: mypy
-        args: ["--strict"]  # Enable strict type checking (optional, can be customized)
-        additional_dependencies: [pydantic, pytest, fastapi, fastapi.responses]
+        args: ["--strict", "--ignore-missing-imports"]  # Enable strict type checking and ignore missing imports
+        additional_dependencies: [pydantic, pytest, pytest_assume, fastapi, fastapi.responses]
 
-  # # Bandit hook for security checks
-  # - repo: https://github.com/PyCQA/bandit
-  #   rev: 1.7.5  # Use the latest stable release
-  #   hooks:
-  #     - id: bandit
-  #       args: ["-r", "app/"]  # Recursively scan your "app/" directory for security issues
+  # Bandit hook for security checks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5  # Use the latest stable release
+    hooks:
+      - id: bandit
+        args: ["-r", "app/"]  # Recursively scan your "app/" directory for security issues
+
+  # New local hook to run pytest
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true

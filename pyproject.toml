@@ -32,3 +32,11 @@ exclude = [
     "build",
     "dist",
 ]
+
+[tool.mypy]
+mypy_path = ["typings"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pytest_assume.*"
+ignore_missing_imports = true

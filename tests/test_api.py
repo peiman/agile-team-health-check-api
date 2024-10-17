@@ -1,5 +1,6 @@
 # tests/test_api.py
-
+import pytest
+from pytest_assume.plugin import assume
 from fastapi.testclient import TestClient
 from app.main import app
 from app.survey_registry import survey_registry
@@ -9,29 +10,29 @@ client = TestClient(app)
 
 def test_root_endpoint() -> None:
     response = client.get("/")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Hello agile team"}
+    assume(response.status_code == 200)
+    assume(response.json() == {"message": "Hello agile team"})
 
 
 def test_list_surveys() -> None:
     response = client.get("/surveys/")
-    assert response.status_code == 200
+    assume(response.status_code == 200)
     data = response.json()
-    assert isinstance(data, list)
+    assume(isinstance(data, list))
 
     # Get expected surveys from the SurveyRegistry
     expected_surveys = survey_registry.list_surveys()
-    assert len(data) == len(expected_surveys)
+    assume(len(data) == len(expected_surveys))
 
     # Map response data by survey ID for easy lookup
     response_surveys = {survey["id"]: survey for survey in data}
 
     for expected_survey in expected_surveys:
         survey_id = expected_survey.id
-        assert survey_id in response_surveys
+        assume(survey_id in response_surveys)
         response_survey = response_surveys[survey_id]
-        assert response_survey["name"] == expected_survey.name
-        assert response_survey["survey_type"] == expected_survey.survey_type.value
+        assume(response_survey["name"] == expected_survey.name)
+        assume(response_survey["survey_type"] == expected_survey.survey_type.value)
 
 
 def test_get_survey_details() -> None:
@@ -40,14 +41,17 @@ def test_get_survey_details() -> None:
     survey_id = survey_ids[0]  # Test with the first survey
 
     response = client.get(f"/surveys/{survey_id}")
-    assert response.status_code == 200
+    assume(response.status_code == 200)
     data = response.json()
     expected_survey = survey_registry.get_survey(survey_id)
-    assert expected_survey is not None
-    assert data["id"] == expected_survey.id
-    assert data["name"] == expected_survey.name
-    assert data["survey_type"] == expected_survey.survey_type.value
-    assert len(data["questions"]) == len(expected_survey.questions)
+
+    if expected_survey is None:
+        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+
+    assume(data["id"] == expected_survey.id)
+    assume(data["name"] == expected_survey.name)
+    assume(data["survey_type"] == expected_survey.survey_type.value)
+    assume(len(data["questions"]) == len(expected_survey.questions))
 
 
 def test_get_survey_questions() -> None:
@@ -56,17 +60,23 @@ def test_get_survey_questions() -> None:
     survey_id = survey_ids[0]  # Test with the first survey
 
     response = client.get(f"/surveys/{survey_id}/questions")
-    assert response.status_code == 200
+    assume(response.status_code == 200)
     data = response.json()
     expected_survey = survey_registry.get_survey(survey_id)
-    assert expected_survey is not None
-    assert len(data) == len(expected_survey.questions)
+
+    if expected_survey is None:
+        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+
+    assume(len(data) == len(expected_survey.questions))
 
 
 def test_submit_survey_response_valid() -> None:
     # Get a survey from the SurveyRegistry
     expected_survey = survey_registry.get_survey(1)
-    assert expected_survey is not None
+
+    if expected_survey is None:
+        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+
     survey_id = expected_survey.id
     # Prepare answers with valid scores within the scale
     answers = []
@@ -81,15 +91,18 @@ def test_submit_survey_response_valid() -> None:
             "timestamp": "2023-10-14T12:00:00Z",
         },
     )
-    assert response.status_code == 200
+    assume(response.status_code == 200)
     data = response.json()
-    assert "scores" in data
+    assume("scores" in data)
 
 
 def test_submit_survey_response_missing_answer() -> None:
     # Get a survey from the SurveyRegistry
     expected_survey = survey_registry.get_survey(1)
-    assert expected_survey is not None
+
+    if expected_survey is None:
+        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+
     survey_id = expected_survey.id
     # Prepare answers but omit one question
     answers = []
@@ -104,14 +117,17 @@ def test_submit_survey_response_missing_answer() -> None:
             "timestamp": "2023-10-14T12:00:00Z",
         },
     )
-    assert response.status_code == 400
-    assert "Incomplete set of answers" in response.json()["detail"]
+    assume(response.status_code == 400)
+    assume("Incomplete set of answers" in response.json()["detail"])
 
 
 def test_submit_survey_response_invalid_score() -> None:
     # Get a survey from the SurveyRegistry
     expected_survey = survey_registry.get_survey(1)
-    assert expected_survey is not None
+
+    if expected_survey is None:
+        pytest.fail(f"Survey with ID {expected_survey} should not be None")
+
     survey_id = expected_survey.id
     # Prepare answers with an invalid score
     answers = []
@@ -126,5 +142,5 @@ def test_submit_survey_response_invalid_score() -> None:
             "timestamp": "2023-10-14T12:00:00Z",
         },
     )
-    assert response.status_code == 400
-    assert "must be between" in response.json()["detail"]
+    assume(response.status_code == 400)
+    assume("must be between" in response.json()["detail"])

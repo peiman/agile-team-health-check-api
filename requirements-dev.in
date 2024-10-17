@@ -2,6 +2,7 @@
 
 -r requirements.in
 pytest
+pytest-assume
 httpx
 pip-tools
 black

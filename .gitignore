@@ -65,3 +65,7 @@ build/
 
 # Ignore generated API docs
 /docs/_build/
+
+# Misc
+agile-team-health-check-api_file_combinator_output.txt
+gitdiff.txt

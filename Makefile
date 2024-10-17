@@ -1,6 +1,6 @@
 # Makefile
 
-.PHONY: run-dev install-dev install-prod compile-dev compile-prod test run docker-build docker-run docker-stop docker-remove docker-restart docker-clean init pre-commit lint format
+.PHONY: run-dev install-dev install-prod compile-dev compile-prod test run docker-build docker-run docker-stop docker-remove docker-restart docker-clean init pre-commit lint format pre-commit-all
 
 # Initialize the environment by installing pip-tools
 init:
@@ -38,8 +38,12 @@ lint:
 test:
 	python -m pytest
 
+# Run all pre-commit checks including tests
+pre-commit-all: install-dev
+	pre-commit run --all-files
+
 # Default target to setup everything for development and run tests
-run-dev: install-dev pre-commit lint test
+run-dev: install-dev pre-commit-all
 
 # Run the application locally
 run:
