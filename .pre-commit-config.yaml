@@ -50,14 +50,12 @@ repos:
         args:
           - -c
           - |
-            import sys
-            result = sys.argv[1]
+            import sys, os
+            result = os.environ.get('PRE_COMMIT_HOOK_INTERIM_RESULT', '1')
             if result == '0':
                 print('\n\033[42m\033[30m SUCCESS: All checks passed \033[0m')
             else:
-                print('\n\033[41m\033[30m FAILURE: Some checks failed \033[0m')
-          - ${PRE_COMMIT_HOOK_INTERIM_RESULT:=1}
+                print('\n\033[41m\033[30m FAILURE: Some checks failed or were skipped \033[0m')
         language: system
-        stages: [commit]
         always_run: true
         verbose: true
