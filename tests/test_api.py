@@ -4,6 +4,8 @@ from pytest_assume.plugin import assume
 from fastapi.testclient import TestClient
 from app.main import app
 from app.survey_registry import survey_registry
+from app.surveys.shs import SHSConstants
+from app.surveys.stress import StressConstants
 
 client = TestClient(app)
 
@@ -152,3 +154,33 @@ def test_submit_survey_response_invalid_score() -> None:
     )
     assume(response.status_code == 400)
     assume("must be between" in response.json()["detail"])
+
+
+def test_get_shs_interpretation() -> None:
+    response = client.get("/v1/surveys/1/interpretation/6.5")
+    assume(response.status_code == 200)
+    data = response.json()
+    assume("interpretation" in data)
+    assume(data["interpretation"] == SHSConstants.HIGH)
+
+
+def test_get_stress_interpretation() -> None:
+    response = client.get("/v1/surveys/2/interpretation/4")
+    assume(response.status_code == 200)
+    data = response.json()
+    assume("interpretation" in data)
+    assume(data["interpretation"] == StressConstants.VERY)
+
+
+def test_get_interpretation_invalid_survey() -> None:
+    response = client.get("/v1/surveys/999/interpretation/5")
+    assume(response.status_code == 404)
+
+
+def test_get_interpretation_invalid_score() -> None:
+    response = client.get("/v1/surveys/2/interpretation/10")
+    assume(response.status_code == 200)
+    data = response.json()
+    assume("interpretation" in data)
+    assume(data["interpretation"] == StressConstants.INVALID)
+    assume(data["interpretation"] == StressConstants.INVALID)

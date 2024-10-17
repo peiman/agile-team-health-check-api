@@ -3,6 +3,7 @@
 import logging
 from fastapi import FastAPI, HTTPException, Request, APIRouter
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, AsyncIterator
 from contextlib import asynccontextmanager
 from .models import (
@@ -50,7 +51,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 # Create the FastAPI app with metadata and lifespan
-app = FastAPI(
+app: FastAPI = FastAPI(
     title="Agile Team Health Check API",
     description="An API for measuring and visualizing the health of Agile teams.",
     version=PROJECT_VERSION,
@@ -61,6 +62,16 @@ app = FastAPI(
     },
     lifespan=lifespan,
 )
+
+# Add CORS middleware with type annotations
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 assessment_repository = AssessmentRepository()
 
@@ -233,6 +244,36 @@ async def submit_survey_response(
     saved_assessment = assessment_repository.save(assessment)
     logger.info(f"Assessment {saved_assessment.id} saved successfully.")
     return saved_assessment
+
+
+@v1_router.get(
+    "/surveys/{survey_id}/interpretation/{score}",
+    response_model=Dict[str, str],
+    summary="Get Score Interpretation",
+    tags=["Surveys"],
+)
+async def get_score_interpretation(survey_id: int, score: float) -> Dict[str, str]:
+    """
+    Retrieve the interpretation for a given score of a specific survey.
+
+    - **survey_id**: The ID of the survey.
+    - **score**: The score to interpret.
+    - **Returns**: The interpretation of the score.
+    """
+    logger.info(f"Fetching interpretation for survey_id: {survey_id}, score: {score}")
+    survey = survey_registry.get_survey(survey_id)
+    if not survey:
+        logger.error(f"Survey with ID {survey_id} not found.")
+        raise HTTPException(status_code=404, detail="Survey not found")
+
+    if hasattr(survey, "get_interpretation"):
+        interpretation = survey.get_interpretation(score)
+        return {"interpretation": interpretation}
+    else:
+        logger.warning(
+            f"Survey with ID {survey_id} does not have an interpretation method."
+        )
+        return {"interpretation": "Interpretation not available for this survey."}
 
 
 # Include the v1 router

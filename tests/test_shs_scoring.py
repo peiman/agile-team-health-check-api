@@ -2,7 +2,7 @@
 
 import pytest
 from pytest_assume.plugin import assume
-from app.surveys.shs import SHSSurvey
+from app.surveys.shs import SHSSurvey, get_shs_interpretation, SHSConstants
 from app.models import AnswerBase
 
 
@@ -31,3 +31,23 @@ def test_shs_scoring_reverse_item(shs_survey: SHSSurvey) -> None:
     if question.reverse_scored:
         score = question.scale_max + question.scale_min - score
     assume(score == 6)  # Reverse of 2 on a scale of 1-7 is 6
+
+
+def test_shs_interpretation() -> None:
+    assume(get_shs_interpretation(6.5) == SHSConstants.HIGH)
+    assume(get_shs_interpretation(4.5) == SHSConstants.MODERATE)
+    assume(get_shs_interpretation(2.5) == SHSConstants.LOW)
+
+
+def test_shs_survey_get_interpretation(shs_survey: SHSSurvey) -> None:
+    assume(shs_survey.get_interpretation(6.5) == SHSConstants.HIGH)
+    assume(shs_survey.get_interpretation(4.5) == SHSConstants.MODERATE)
+    assume(shs_survey.get_interpretation(2.5) == SHSConstants.LOW)
+
+
+def test_shs_survey_interpretation_guide(shs_survey: SHSSurvey) -> None:
+    assume(shs_survey.interpretation_guide is not None)
+    assume(
+        "Interpreting the Subjective Happiness Scale (SHS)"
+        in shs_survey.interpretation_guide
+    )

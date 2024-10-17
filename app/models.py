@@ -16,9 +16,11 @@ class SurveyType(str, Enum):
 
 class QuestionBase(BaseModel):
     id: int = Field(..., description="Unique identifier for the question")
-    text: str = Field(..., description="The question text")
+    text: str = Field(..., description="The full text of the question")
     scale_min: int = Field(..., description="Minimum value for the scale")
     scale_max: int = Field(..., description="Maximum value for the scale")
+    scale_min_label: str = Field(..., description="Label for the minimum scale value")
+    scale_max_label: str = Field(..., description="Label for the maximum scale value")
     reverse_scored: bool = Field(
         False, description="Indicates if the question is reverse-scored"
     )
