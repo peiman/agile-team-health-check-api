@@ -55,7 +55,12 @@ repos:
             if result == '0':
                 print('\n\033[42m\033[30m SUCCESS: All checks passed \033[0m')
             else:
-                print('\n\033[41m\033[30m FAILURE: Some checks failed or were skipped \033[0m')
+                from subprocess import run, PIPE
+                output = run(['git', 'diff', '--staged', '--name-only'], stdout=PIPE).stdout.decode()
+                if output.strip():
+                    print('\n\033[41m\033[30m FAILURE: Some checks failed \033[0m')
+                else:
+                    print('\n\033[42m\033[30m SUCCESS: All relevant checks passed \033[0m')
         language: system
         always_run: true
         verbose: true
