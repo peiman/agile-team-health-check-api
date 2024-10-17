@@ -7,21 +7,24 @@ An API for measuring and visualizing the health of Agile teams using survey inst
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Features](#features)
-- [API Documentation](#api-documentation)
-- [Installation](#installation)
-  - [Prerequisites](#prerequisites)
-  - [Setup](#setup)
-- [Usage](#usage)
-  - [Makefile Commands](#makefile-commands)
-  - [Running Locally](#running-locally)
-  - [Using Docker](#using-docker)
-- [Available Surveys](#available-surveys)
-- [Running Tests](#running-tests)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+- [Agile Team Health Check API](#agile-team-health-check-api)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Features](#features)
+  - [API Documentation](#api-documentation)
+  - [Installation](#installation)
+    - [Prerequisites](#prerequisites)
+    - [Setup](#setup)
+  - [Usage](#usage)
+    - [Running Locally](#running-locally)
+    - [Using Docker](#using-docker)
+  - [Available Surveys](#available-surveys)
+  - [Development](#development)
+    - [Running Tests](#running-tests)
+    - [Code Quality](#code-quality)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Contact](#contact)
 
 ## Introduction
 
@@ -37,6 +40,7 @@ The Agile Team Health Check API provides endpoints to conduct surveys, calculate
 - **Flexible Survey Management** with a `SurveyRegistry` class
 - **Dependency Management** using pip-tools
 - **Docker Support** for containerization
+- **Code Quality** checks with black, flake8, mypy, and bandit
 
 ## API Documentation
 
@@ -51,272 +55,112 @@ These provide interactive interfaces to explore and test the API endpoints.
 
 ### Prerequisites
 
-- **Python 3.7 or higher**
-- **pip**
-- **Make**
-- **Docker** (optional, for containerization)
+- Python 3.9 or higher
+- Docker (optional, for containerization)
+- Git (for version management)
 
 ### Setup
 
-1. **Clone the Repository**
-
+1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/agile-team-health-check-api.git
    cd agile-team-health-check-api
    ```
 
-2. **Create a Virtual Environment (Recommended)**
-
+2. Create a virtual environment (optional but recommended):
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
    ```
 
-3. **Install Development Dependencies**
-
+3. Install dependencies:
    ```bash
-   make install-dev
+   pip install -r requirements.txt
    ```
-
-   This command will:
-
-   - Compile production dependencies using `pip-compile requirements.in`
-   - Compile development dependencies using `pip-compile requirements-dev.in -o requirements-dev.txt`
-   - Sync production dependencies using `pip-sync requirements.txt`
-   - Sync development dependencies using `pip-sync requirements-dev.txt`
 
 ## Usage
 
-### Makefile Commands
-
-The `Makefile` provides a set of commands to manage your project efficiently. Here's a breakdown of the available commands:
-
-- **`make run-dev`**: Compiles development dependencies, installs them, and runs tests.
-
-  ```bash
-  make run-dev
-  ```
-
-- **`make compile-prod`**: Compiles production dependencies.
-
-  ```bash
-  make compile-prod
-  ```
-
-- **`make compile-dev`**: Compiles both production and development dependencies.
-
-  ```bash
-  make compile-dev
-  ```
-
-- **`make install-prod`**: Installs production dependencies.
-
-  ```bash
-  make install-prod
-  ```
-
-- **`make install-dev`**: Installs both production and development dependencies.
-
-  ```bash
-  make install-dev
-  ```
-
-- **`make test`**: Runs the test suite using pytest.
-
-  ```bash
-  make test
-  ```
-
-- **`make run`**: Runs the application locally using Uvicorn.
-
-  ```bash
-  make run
-  ```
-
-- **`make docker-build`**: Builds the Docker image for the application.
-
-  ```bash
-  make docker-build
-  ```
-
-- **`make docker-run`**: Runs the Docker container.
-
-  ```bash
-  make docker-run
-  ```
-
-- **`make docker-stop`**: Stops the running Docker container.
-
-  ```bash
-  make docker-stop
-  ```
-
-- **`make docker-remove`**: Removes the Docker container.
-
-  ```bash
-  make docker-remove
-  ```
-
-- **`make docker-restart`**: Rebuilds and restarts the Docker container.
-
-  ```bash
-  make docker-restart
-  ```
-
-- **`make docker-clean`**: Removes dangling Docker images.
-
-  ```bash
-  make docker-clean
-  ```
-
 ### Running Locally
 
-To run the application locally, use the `make run` command:
+To run the application locally:
 
 ```bash
-make run
+uvicorn app.main:app --reload
 ```
 
-This will start the FastAPI server with hot-reloading enabled. Access the API at [http://localhost:8000](http://localhost:8000).
+The API will be available at `http://localhost:8000`.
 
 ### Using Docker
 
-1. **Build the Docker Image**
-
+1. Build the Docker image:
    ```bash
-   make docker-build
+   docker-compose build
    ```
 
-2. **Run the Docker Container**
-
+2. Run the Docker container:
    ```bash
-   make docker-run
+   docker-compose up
    ```
 
-   This will start the container in detached mode, mapping port `80` of the container to port `80` on your host.
-
-3. **Stop the Docker Container**
-
-   ```bash
-   make docker-stop
-   ```
-
-4. **Remove the Docker Container**
-
-   ```bash
-   make docker-remove
-   ```
-
-5. **Rebuild and Restart the Docker Container**
-
-   ```bash
-   make docker-restart
-   ```
-
-6. **Clean Up Dangling Images**
-
-   ```bash
-   make docker-clean
-   ```
+The API will be available at `http://localhost:8000`.
 
 ## Available Surveys
 
 The API currently includes the following surveys:
 
 1. **Subjective Happiness Scale (SHS)**
-   - **ID**: 1
-   - **Type**: Weekly
-   - **Questions**: 4
+   - ID: 1
+   - Type: Weekly
+   - Questions: 4
 
 2. **Single-Item Stress Measure**
-   - **ID**: 2
-   - **Type**: Weekly
-   - **Questions**: 1
+   - ID: 2
+   - Type: Weekly
+   - Questions: 1
 
-### Listing All Surveys
+## Development
 
-Retrieve a list of all available surveys:
+### Running Tests
 
-```bash
-GET http://localhost:8000/surveys/
-```
-
-### Getting Survey Details
-
-Retrieve detailed information about a specific survey, including its questions:
+To run the test suite:
 
 ```bash
-GET http://localhost:8000/surveys/{survey_id}
+pytest
 ```
 
-Replace `{survey_id}` with the actual survey ID (e.g., `1` or `2`).
+### Code Quality
 
-### Submitting Survey Responses
+We use several tools to maintain code quality:
 
-Submit responses to a survey to receive a calculated assessment result:
+- **black**: For code formatting
+- **flake8**: For style guide enforcement
+- **mypy**: For static type checking
+- **bandit**: For security linting
+
+To run all code quality checks:
 
 ```bash
-POST http://localhost:8000/surveys/{survey_id}/responses
-```
-
-**Payload Example:**
-
-```json
-{
-  "survey_id": 1,
-  "answers": [
-    {"question_id": 1, "score": 5},
-    {"question_id": 2, "score": 6},
-    {"question_id": 3, "score": 3},
-    {"question_id": 4, "score": 2}
-  ],
-  "timestamp": "2023-10-14T12:00:00Z"
-}
-```
-
-## Running Tests
-
-Ensure all tests pass to verify the integrity of the application:
-
-```bash
-make test
-```
-
-Or directly with:
-
-```bash
-python -m pytest
+pre-commit run --all-files
 ```
 
 ## Contributing
 
 Contributions are welcome! Please follow these steps:
 
-1. **Fork the Repository**
+1. Fork the repository
+2. Create a new branch: `git checkout -b feature-branch-name`
+3. Make your changes and commit them: `git commit -m 'Add some feature'`
+4. Push to the branch: `git push origin feature-branch-name`
+5. Submit a pull request
 
-2. **Create a Feature Branch**
-
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-3. **Make Changes and Commit**
-
-   ```bash
-   git add .
-   git commit -m "Add your descriptive commit message"
-   ```
-
-4. **Push to Your Fork**
-
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-5. **Create a Pull Request**
-
-   Open a pull request on the main repository with a description of your changes.
+Please ensure your code adheres to our coding standards and passes all tests.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+Github: @peiman
+
+Project Link: [https://github.com/yourusername/agile-team-health-check-api](https://github.com/yourusername/agile-team-health-check-api)
