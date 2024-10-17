@@ -2,42 +2,39 @@
 
 repos:
   - repo: https://github.com/psf/black
-    rev: 24.10.0  # Use the latest stable release
+    rev: 24.10.0
     hooks:
       - id: black
-        args: ["--line-length", "88"]  # Automatically formats code to 88 characters per line
+        args: ["--line-length", "88"]
         language_version: python3.9
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1  # Use the latest stable release
+    rev: 7.1.1
     hooks:
       - id: flake8
         additional_dependencies: [flake8-bugbear]
-        args: ["--max-line-length=88"]  # Ensures Flake8 follows the 88 character limit
+        args: ["--max-line-length=88"]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: trailing-whitespace  # Removes trailing whitespace
-      - id: end-of-file-fixer  # Ensures files end with a newline
-      - id: check-yaml  # Checks YAML file formatting
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
 
-  # Mypy hook for type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1  # Use the latest stable release
+    rev: v1.5.1
     hooks:
       - id: mypy
-        args: ["--strict", "--ignore-missing-imports"]  # Enable strict type checking and ignore missing imports
+        args: ["--strict", "--ignore-missing-imports"]
         additional_dependencies: [pydantic, pytest, pytest_assume, fastapi, fastapi.responses]
 
-  # Bandit hook for security checks
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5  # Use the latest stable release
+    rev: 1.7.5
     hooks:
       - id: bandit
-        args: ["-r", "app/"]  # Recursively scan your "app/" directory for security issues
+        args: ["-r", "app/"]
 
-  # New local hook to run pytest
   - repo: local
     hooks:
       - id: pytest-check
@@ -46,3 +43,21 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+
+      - id: commit-status-summary
+        name: Commit Status Summary
+        entry: python
+        args:
+          - -c
+          - |
+            import sys
+            result = sys.argv[1]
+            if result == '0':
+                print('\n\033[42m\033[30m SUCCESS: All checks passed \033[0m')
+            else:
+                print('\n\033[41m\033[30m FAILURE: Some checks failed \033[0m')
+          - ${PRE_COMMIT_HOOK_INTERIM_RESULT:=1}
+        language: system
+        stages: [commit]
+        always_run: true
+        verbose: true
